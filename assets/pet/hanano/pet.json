@@ -1,0 +1,19 @@
+{
+  "id": "hanano",
+  "name": "花野",
+  "order": 2,
+  "scale": 0.5,
+  "states": [
+    "failed",
+    "idle",
+    "jumping",
+    "look-left-side",
+    "look-right-side",
+    "review",
+    "running",
+    "running-left",
+    "running-right",
+    "waiting",
+    "waving"
+  ]
+}

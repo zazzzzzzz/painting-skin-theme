@@ -1,0 +1,19 @@
+{
+  "id": "mint",
+  "name": "薄荷",
+  "order": 3,
+  "scale": 0.5,
+  "states": [
+    "failed",
+    "idle",
+    "jumping",
+    "look-left-side",
+    "look-right-side",
+    "review",
+    "running",
+    "running-left",
+    "running-right",
+    "waiting",
+    "waving"
+  ]
+}

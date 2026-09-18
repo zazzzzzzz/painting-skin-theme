@@ -1,0 +1,575 @@
+/* 深空线稿 · 水晶少女 —— ZCode 皮肤样式层（线稿版）
+ *
+ * 与 cosmic-glass 的区别只在素材与画法：本主题所有美术都是**纯 alpha 蒙版**
+ * （RGB 被统一成白色、alpha 量化成 16 级），所以两种极性都用 mask + 主题色/渐变填充。
+ * 这样线色完全由 token 控制 —— 线稿本身是中性深灰，若直接当图片用，在深空底上会看不见。
+ *
+ * 配色沿用 cosmic-glass 的实测值（深空 #0d1012 / 亮青 #76bde2 / 冰白 #cfe0ee），两套皮肤色系一致。 */
+
+html.diana-zcode-host.theme-zai-dark {
+  /* 画布基准色取自用户指定的区域实测：rgb(24~25, 34~35, 41~42) ≈ #19232a。
+   * 面板/侧栏按它重排，保持"侧栏最暗 < 画布 < 面板 < 面板强"的层级 ——
+   * 否则画布比面板还亮，面板会看起来像塌进去的洞。 */
+  --diana-zcode-surface: #19232a;
+  --diana-zcode-panel: #1f2a33;
+  --diana-zcode-panel-strong: #26333e;
+  --diana-zcode-sidebar: #151d24;
+  --diana-zcode-ink: #e8eef5;
+  --diana-zcode-muted: #9aacbd;
+  --diana-zcode-accent: #76bde2;
+  --diana-zcode-accent-soft: #1b3346;
+  --diana-zcode-border: #2c3a45;
+  --diana-zcode-line-coral: #63b1b6;
+  --diana-zcode-line-berry: #505a89;
+  --diana-zcode-line-gold: #987a64;
+  --diana-zcode-rail-normal: #3a5162;
+  --diana-zcode-rail-major: #47677e;
+  --diana-zcode-rail-hover: #76bde2;
+  --diana-zcode-rail-current: #a8e6f0;
+  --diana-zcode-glow: rgb(118 189 226 / 14%);
+  /* 线稿色：暗夜用冰白→亮青的渐变，线本身发光 */
+  --diana-zcode-line-a: #eef0f6;
+  --diana-zcode-line-b: #76bde2;
+  --diana-zcode-line-glow: rgb(118 189 226 / 38%);
+  --diana-zcode-line-opacity: .62;
+  --diana-zcode-character-opacity: .78;
+
+  --color-background: var(--diana-zcode-surface);
+  --color-background-win-alt: #1f2a33;
+  --color-background-alt: rgb(25 35 42 / 72%);
+  --color-header: var(--color-background-win-alt);
+  --color-panel: var(--diana-zcode-panel);
+  --color-sidebar: var(--diana-zcode-sidebar);
+  --color-card: var(--diana-zcode-panel-strong);
+  --color-popover: var(--diana-zcode-panel-strong);
+  --color-popover-header: var(--diana-zcode-panel);
+  --color-input: var(--diana-zcode-panel-strong);
+  --color-border: rgb(118 189 226 / 16%);
+  --color-border-hover: rgb(118 189 226 / 30%);
+  --color-hover: rgb(118 189 226 / 9%);
+  --color-selected: rgb(118 189 226 / 16%);
+  --color-surface: rgb(118 189 226 / 6%);
+  --color-surface-hover: rgb(118 189 226 / 13%);
+  --color-accent: var(--diana-zcode-accent-soft);
+  --color-brand: var(--diana-zcode-ink);
+  --color-primary: var(--diana-zcode-ink);
+  --color-primary-foreground: var(--diana-zcode-surface);
+  --color-foreground: var(--diana-zcode-ink);
+  --color-foreground-subtle: var(--diana-zcode-muted);
+  --color-foreground-subtlest: rgb(143 163 184 / 58%);
+}
+
+html.diana-zcode-host.theme-zai-light {
+  --diana-zcode-surface: #eef2f7;
+  --diana-zcode-panel: #ffffff;
+  --diana-zcode-panel-strong: #f4f8fc;
+  --diana-zcode-sidebar: #e7edf4;
+  --diana-zcode-ink: #1a2230;
+  --diana-zcode-muted: #5a6b7d;
+  --diana-zcode-accent: #2c7fb8;
+  --diana-zcode-accent-soft: #d6e8f5;
+  --diana-zcode-border: #d3dde7;
+  --diana-zcode-line-coral: #4a8fa8;
+  --diana-zcode-line-berry: #4a5480;
+  --diana-zcode-line-gold: #987a64;
+  --diana-zcode-rail-normal: rgb(44 127 184 / 55%);
+  --diana-zcode-rail-major: rgb(44 127 184 / 55%);
+  --diana-zcode-rail-hover: rgb(44 127 184 / 72%);
+  --diana-zcode-rail-current: rgb(30 100 150 / 92%);
+  --diana-zcode-glow: rgb(44 127 184 / 10%);
+  /* 线稿色：日间用较深的青蓝，浅底上才看得清 */
+  --diana-zcode-line-a: #2f6d92;
+  --diana-zcode-line-b: #6ba6c9;
+  --diana-zcode-line-glow: rgb(44 127 184 / 16%);
+  --diana-zcode-line-opacity: .5;
+  --diana-zcode-character-opacity: .62;
+
+  --color-background: var(--diana-zcode-surface);
+  --color-background-win-alt: #e4eaf2;
+  --color-background-alt: rgb(238 242 247 / 76%);
+  --color-header: var(--color-background-win-alt);
+  --color-panel: var(--diana-zcode-panel);
+  --color-sidebar: var(--diana-zcode-sidebar);
+  --color-card: var(--diana-zcode-panel);
+  --color-popover: var(--diana-zcode-panel);
+  --color-popover-header: var(--diana-zcode-panel-strong);
+  --color-input: var(--diana-zcode-panel);
+  --color-border: rgb(44 127 184 / 18%);
+  --color-border-hover: rgb(44 127 184 / 30%);
+  --color-hover: rgb(44 127 184 / 7%);
+  --color-selected: rgb(44 127 184 / 13%);
+  --color-surface: rgb(44 127 184 / 5%);
+  --color-surface-hover: rgb(44 127 184 / 10%);
+  --color-accent: var(--diana-zcode-accent-soft);
+  --color-brand: var(--diana-zcode-ink);
+  --color-primary: var(--diana-zcode-ink);
+  --color-primary-foreground: var(--diana-zcode-panel);
+  --color-foreground: var(--diana-zcode-ink);
+  --color-foreground-subtle: var(--diana-zcode-muted);
+  --color-foreground-subtlest: rgb(90 107 125 / 56%);
+}
+
+html.diana-zcode-host body {
+  color: var(--diana-zcode-ink);
+  background-color: var(--diana-zcode-surface);
+}
+
+/* 顶栏：**按 Diana 的做法——什么都不做**。
+ * 顶栏元素自身是透明的，看到的是父级 bg-background；只要把 --color-background 设成
+ * --diana-zcode-surface，顶栏就自动与画布同色，应用自己的那条底边框也保留。
+ * 之前我给它单独设过纯色、渐变、半透明+柔光、去边框 —— 全是多余的发明，
+ * 要么形成一条色带，要么叠出双重光斑，比 Diana 的默认做法难看。 */
+
+/* ---------- 侧栏与组件钩子 ---------- */
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"],
+html.diana-zcode-host [data-testid="sidebar"] {
+  color: var(--diana-zcode-muted);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--diana-zcode-accent) 5%, transparent), transparent 240px),
+    linear-gradient(90deg, color-mix(in srgb, var(--diana-zcode-accent) 6%, transparent), transparent 40%),
+    var(--diana-zcode-sidebar) !important;
+  scrollbar-color: color-mix(in srgb, var(--diana-zcode-accent) 26%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] {
+  position: relative;
+  box-shadow: inset -1px 0 color-mix(in srgb, var(--diana-zcode-accent) 9%, transparent);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"]::after {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  bottom: 18px;
+  z-index: 3;
+  width: 1px;
+  content: "";
+  background: linear-gradient(180deg, transparent,
+    color-mix(in srgb, var(--diana-zcode-accent) 44%, transparent) 22%, transparent);
+  pointer-events: none;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid="task-new-button"] svg {
+  color: color-mix(in srgb, var(--diana-zcode-accent) 86%, var(--diana-zcode-ink));
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] :is([data-testid="task-new-button"], button[data-icon="inline-start"]) {
+  border: 1px solid transparent !important;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] :is([data-testid="task-new-button"], button[data-icon="inline-start"]):hover {
+  background: color-mix(in srgb, var(--diana-zcode-accent) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--diana-zcode-accent) 16%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [role="tablist"][data-slot="tabs-list"] {
+  background: color-mix(in srgb, var(--diana-zcode-panel-strong) 86%, var(--diana-zcode-accent)) !important;
+  border: 1px solid color-mix(in srgb, var(--diana-zcode-accent) 13%, transparent);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [role="tab"][data-slot="tabs-trigger"]::after {
+  display: none !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [role="tab"][aria-selected="true"] {
+  color: var(--diana-zcode-ink) !important;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--diana-zcode-panel) 90%, var(--diana-zcode-accent)), var(--diana-zcode-panel)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--diana-zcode-accent) 20%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] button[data-slot="collapsible-trigger"] {
+  color: color-mix(in srgb, var(--diana-zcode-muted) 78%, var(--diana-zcode-accent)) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="workspace-item-"],
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"] {
+  border: 1px solid transparent !important;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="workspace-item-"]:hover,
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"]:hover {
+  background: color-mix(in srgb, var(--diana-zcode-accent) 11%, transparent) !important;
+  border-color: color-mix(in srgb, var(--diana-zcode-accent) 12%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="workspace-item-"] svg {
+  color: color-mix(in srgb, var(--diana-zcode-muted) 76%, var(--diana-zcode-accent));
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"] {
+  position: relative;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"].bg-selected {
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--diana-zcode-accent) 22%, transparent),
+    color-mix(in srgb, var(--diana-zcode-accent) 10%, transparent) 72%, transparent) !important;
+  border-color: color-mix(in srgb, var(--diana-zcode-accent) 24%, transparent) !important;
+  box-shadow: inset 2px 0 var(--diana-zcode-accent),
+    0 4px 16px color-mix(in srgb, var(--diana-zcode-accent) 12%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"].bg-selected::before {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 3px;
+  height: 14px;
+  content: "";
+  background: linear-gradient(180deg, var(--diana-zcode-line-a), var(--diana-zcode-accent));
+  border-radius: 999px;
+  box-shadow: 0 0 9px color-mix(in srgb, var(--diana-zcode-accent) 46%, transparent);
+  transform: translateY(-50%);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid="login-trigger"]:hover {
+  background: color-mix(in srgb, var(--diana-zcode-accent) 10%, transparent) !important;
+}
+
+/* ---------- 工作区与美术层 ---------- */
+
+/* 画布：**纯色，不要柔光**。之前那两团 radial-gradient 会让画布一块亮一块暗
+ * （右上角明显比其他地方亮），跟"整个画布色系统一"冲突。 */
+html.diana-zcode-host .diana-zcode-workspace {
+  background-color: var(--diana-zcode-surface);
+  background-image: none;
+}
+
+html.diana-zcode-host #diana-zcode-chrome {
+  position: fixed;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none !important;
+  user-select: none !important;
+  container-type: inline-size;
+}
+
+html.diana-zcode-host .diana-zcode-foreground {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+html.diana-zcode-host #diana-zcode-chrome,
+html.diana-zcode-host #diana-zcode-chrome * {
+  pointer-events: none !important;
+}
+
+html.diana-zcode-host #diana-zcode-chrome > *,
+html.diana-zcode-host .diana-zcode-character-cluster > * {
+  position: absolute;
+  display: block;
+}
+
+/* ---------- 统一的线稿画法：mask + 渐变主题色 ---------- */
+
+html.diana-zcode-host .diana-zcode-corner-line,
+html.diana-zcode-host .diana-zcode-upper-line,
+html.diana-zcode-host .diana-zcode-doodle,
+html.diana-zcode-host .diana-zcode-star,
+html.diana-zcode-host .diana-zcode-candy,
+html.diana-zcode-host .diana-zcode-acao {
+  background-image: linear-gradient(160deg, var(--diana-zcode-line-a), var(--diana-zcode-line-b));
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  filter: drop-shadow(0 0 7px var(--diana-zcode-line-glow));
+}
+
+/* 角线：素材 1200×647（长宽比 1.855） */
+html.diana-zcode-host .diana-zcode-corner-line {
+  top: 44px;
+  left: 26px;
+  width: clamp(340px, 54cqw, 900px);
+  aspect-ratio: 1200 / 647;
+  -webkit-mask-image: var(--diana-zcode-image-corner);
+  mask-image: var(--diana-zcode-image-corner);
+  -webkit-mask-position: left center;
+  mask-position: left center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  opacity: .34;
+}
+
+/* 上缘线：素材 1040×347（3.0） */
+html.diana-zcode-host .diana-zcode-upper-line {
+  inset: 0;
+  -webkit-mask-image: var(--diana-zcode-image-upper);
+  mask-image: var(--diana-zcode-image-upper);
+  -webkit-mask-position: top 46px right 20px;
+  mask-position: top 46px right 20px;
+  -webkit-mask-size: clamp(300px, 48cqw, 660px) auto;
+  mask-size: clamp(300px, 48cqw, 660px) auto;
+  opacity: .3;
+}
+
+/* 涂鸦主图：素材 700×467（1.499），横构图，放左下 */
+html.diana-zcode-host .diana-zcode-doodle {
+  left: 16px;
+  bottom: clamp(78px, 8vh, 112px);
+  width: clamp(240px, 40cqw, 360px);
+  aspect-ratio: 700 / 467;
+  -webkit-mask-image: var(--diana-zcode-image-doodle);
+  mask-image: var(--diana-zcode-image-doodle);
+  -webkit-mask-position: left bottom;
+  mask-position: left bottom;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  opacity: calc(var(--diana-zcode-line-opacity) - .1);
+}
+
+html.diana-zcode-host .diana-zcode-character-cluster {
+  right: -6px;
+  bottom: -4px;
+  width: clamp(260px, 44cqw, 430px);
+  height: min(78vh, 660px);
+}
+
+/* 立绘：**两层**。
+ * 线稿只有线条带 alpha，轮廓内部是透明的 —— 直接铺在深色底上就是一团等亮度的白线网，
+ * 没有体量也没有主次（实测观感确实如此）。所以垫一层剪影（由 tools/make-silhouette.js
+ * 从线稿反算）提供体块，线条再叠在上面提供细节。
+ * 剪影用 characterLight 槽位承载（该槽位在日间模式下本来就不需要第二张立绘）。 */
+html.diana-zcode-host .diana-zcode-character {
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(172deg,
+    color-mix(in srgb, var(--diana-zcode-accent) 26%, transparent) 0%,
+    color-mix(in srgb, var(--diana-zcode-line-berry) 34%, transparent) 62%,
+    transparent 100%);
+  -webkit-mask-image: var(--diana-zcode-image-character-light);
+  mask-image: var(--diana-zcode-image-character-light);
+  -webkit-mask-position: right bottom;
+  mask-position: right bottom;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  /* 必须显式写 no-repeat：mask-repeat 的初始值是 repeat，配合 contain 会在留白区
+   * 把蒙版平铺一遍 —— 表现为素材底部（她的脚与脚踝飘带）重复出现在元素顶部，
+   * 看着像头顶浮着一条腿。这个坑不会报错，只能靠肉眼看出来。 */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: .95;
+  filter: none;
+}
+
+html.diana-zcode-host .diana-zcode-character::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background-image: linear-gradient(160deg,
+    var(--diana-zcode-line-a) 0%, var(--diana-zcode-line-b) 78%,
+    color-mix(in srgb, var(--diana-zcode-line-b) 55%, transparent) 100%);
+  -webkit-mask-image: var(--diana-zcode-image-character-dark);
+  mask-image: var(--diana-zcode-image-character-dark);
+  -webkit-mask-position: right bottom;
+  mask-position: right bottom;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  opacity: .72;
+  filter: drop-shadow(0 0 4px var(--diana-zcode-line-glow));
+}
+
+html.diana-zcode-host .diana-zcode-star,
+html.diana-zcode-host .diana-zcode-candy,
+html.diana-zcode-host .diana-zcode-acao {
+  aspect-ratio: 1;
+  opacity: var(--diana-zcode-line-opacity);
+}
+
+html.diana-zcode-host .diana-zcode-star-a {
+  left: 9%;
+  top: 40%;
+  width: clamp(26px, 3.6cqw, 34px);
+  transform: rotate(-6deg);
+}
+
+html.diana-zcode-host .diana-zcode-star-b {
+  right: 5%;
+  top: 22%;
+  width: clamp(34px, 4.8cqw, 46px);
+  transform: rotate(8deg);
+}
+
+html.diana-zcode-host .diana-zcode-candy-wrapped {
+  left: 3%;
+  top: 56%;
+  width: clamp(44px, 6cqw, 62px);
+  transform: rotate(-12deg);
+}
+
+html.diana-zcode-host .diana-zcode-candy-lollipop {
+  right: 7%;
+  top: 60%;
+  width: clamp(52px, 7cqw, 72px);
+  transform: rotate(14deg);
+}
+
+html.diana-zcode-host .diana-zcode-acao-heart {
+  left: 15%;
+  top: 69%;
+  width: clamp(78px, 10.4cqw, 104px);
+  transform: rotate(-5deg);
+}
+
+html.diana-zcode-host .diana-zcode-acao-cheer {
+  right: 8%;
+  top: 72%;
+  width: clamp(70px, 9.4cqw, 94px);
+  transform: rotate(5deg);
+}
+
+/* 各元素指向自己的蒙版 */
+html.diana-zcode-host .diana-zcode-star {
+  -webkit-mask-image: var(--diana-zcode-image-star);
+  mask-image: var(--diana-zcode-image-star);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+html.diana-zcode-host .diana-zcode-candy {
+  -webkit-mask-image: var(--diana-zcode-image-candy-wrapped);
+  mask-image: var(--diana-zcode-image-candy-wrapped);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+html.diana-zcode-host .diana-zcode-acao-heart {
+  -webkit-mask-image: var(--diana-zcode-image-acao-heart);
+  mask-image: var(--diana-zcode-image-acao-heart);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+html.diana-zcode-host .diana-zcode-acao-cheer {
+  -webkit-mask-image: var(--diana-zcode-image-acao-cheer);
+  mask-image: var(--diana-zcode-image-acao-cheer);
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* ---------- 消息导轨 ---------- */
+
+html.diana-zcode-host .diana-zcode-message-rail {
+  scrollbar-width: none;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::-webkit-scrollbar {
+  display: none;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::before,
+html.diana-zcode-host .diana-zcode-message-rail::after {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: block;
+  width: 5px;
+  height: 5px;
+  content: "";
+  background: var(--diana-zcode-rail-major);
+  opacity: .9;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::before {
+  top: 1px;
+  margin: -5px 0 2px 1px;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::after {
+  bottom: 1px;
+  margin: 2px 0 -5px 1px;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button {
+  position: relative;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button > span {
+  width: 12px !important;
+  height: 2px !important;
+  background: var(--diana-zcode-rail-normal) !important;
+  border-radius: 999px !important;
+  opacity: .74 !important;
+  transform: scaleX(var(--diana-art-scale, .3)) !important;
+  transform-origin: left center !important;
+  transition: background-color 150ms ease, opacity 150ms ease, transform 150ms ease !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-diana-rail-major="true"] > span {
+  background: var(--diana-zcode-rail-major) !important;
+  opacity: .92 !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-visual-tone="mid"] > span {
+  opacity: .74 !important;
+  transform: scaleX(1.25) !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-visual-tone="near"] > span {
+  opacity: .88 !important;
+  transform: scaleX(1.7) !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-visual-tone="peak"] > span,
+html.diana-zcode-host .diana-zcode-message-rail button:hover > span,
+html.diana-zcode-host .diana-zcode-message-rail button:focus-visible > span {
+  background: var(--diana-zcode-rail-hover) !important;
+  opacity: 1 !important;
+  transform: scaleX(2.6) !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-diana-viewport-current="true"] > span,
+html.diana-zcode-host .diana-zcode-message-rail button[data-active="true"] > span,
+html.diana-zcode-host .diana-zcode-message-rail button[aria-current="location"] > span {
+  background: var(--diana-zcode-rail-current) !important;
+  opacity: .8 !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-diana-viewport-current="true"]::before {
+  position: absolute;
+  left: -2px;
+  width: 9px;
+  height: 9px;
+  content: "";
+  background: var(--diana-zcode-rail-current);
+  clip-path: polygon(50% 0, 62% 35%, 100% 50%, 62% 65%, 50% 100%, 38% 65%, 0 50%, 38% 35%);
+  opacity: .8;
+}
+
+@media (max-width: 900px), (max-height: 620px) {
+  html.diana-zcode-host .diana-zcode-character-cluster {
+    opacity: .5;
+    transform: translateX(16%);
+  }
+
+  html.diana-zcode-host .diana-zcode-doodle {
+    opacity: .2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.diana-zcode-host #diana-zcode-chrome,
+  html.diana-zcode-host #diana-zcode-chrome * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

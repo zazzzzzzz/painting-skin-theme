@@ -1,0 +1,19 @@
+{
+  "id": "uta-adult",
+  "name": "Uta",
+  "order": 4,
+  "scale": 0.5,
+  "states": [
+    "failed",
+    "idle",
+    "jumping",
+    "look-left-side",
+    "look-right-side",
+    "review",
+    "running",
+    "running-left",
+    "running-right",
+    "waiting",
+    "waving"
+  ]
+}

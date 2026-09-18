@@ -1,0 +1,62 @@
+{
+  "name": "painting-skin-theme",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ZCode 皮肤注入器：皮肤样式层取自 Diana Multi-App Launcher，注入机制取自 Dream-Work-Theme。",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "typecheck": "tsc --noEmit",
+    "inject": "npm run build && node dist/cli.js",
+    "pack:win": "npm run build && electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "electron": "^43.4.1",
+    "electron-builder": "^24.13.3",
+    "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "com.paintingskintheme.desktop",
+    "productName": "Painting Skin Theme",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "dist/**/*",
+      "src/panel.html",
+      "themes/**/*",
+      "assets/**/*",
+      "package.json",
+      "node_modules/node-sqlite*/**/*"
+    ],
+    "asarUnpack": [
+      "assets/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "artifactName": "PaintingSkinTheme-Setup-${version}.${ext}",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Painting Skin Theme",
+      "deleteAppDataOnUninstall": false
+    },
+    "forceCodeSigning": false
+  }
+}

@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Painting Skin Theme</title>
+<style>
+  /* 界面风格对齐 diana-multi-app-launcher 的打包程序：
+     ① 板框是**不规则手裁形状**（非对称、多段切角），不是矩形倒角
+     ② **立绘独立成层、不参与裁切**，压在板框之上并做得比板大 —— 头发与手臂要溢出边缘
+     ③ 按钮 deck 是横条，略微超出板框宽度
+     ④ 状态卡在板外，用两个小挂钩连接 */
+  :root {
+    --ink: #f6eef2;
+    --muted: #b9a6b0;
+    --pink: #e2557a;
+    --pink-bright: #ff7ba3;
+    --coral: #d86e91;
+    --board: #191320;
+    --board-2: #120e18;
+    --line: rgb(226 85 122 / 42%);
+    --ok: #57b98a;
+    --warn: #d9a24a;
+    --bad: #d96a6a;
+    /* 不规则板形：右上凸出、右侧多段台阶、左下内收，刻意不对称 */
+    /* 右上角在顶部就要够宽：− × 要落在板内。参考图那里是外扩的，
+       左边内凹、右边多段台阶保留「手裁」的不规则感。 */
+    --board-shape: polygon(
+      7% 3.2%, 14% 1%, 40% 1.6%, 44% 0.4%, 63% 0.4%, 67% 1.8%,
+      84% 1.6%, 92% 4.6%, 95.5% 10%, 91% 16%, 96% 21%, 92% 27%,
+      96.5% 33%, 91.5% 40%, 97% 46%, 92% 53%, 96% 59%, 90.5% 65%,
+      94% 72%, 88% 78%, 91% 84%, 83% 88%, 74% 91%, 60% 90%,
+      52% 92.5%, 40% 91%, 26% 92.5%, 14% 90%, 6% 85%, 2.5% 76%,
+      4% 66%, 1% 58%, 4.5% 47%, 1.5% 39%, 5% 30%, 2% 22%, 6% 15%, 3.5% 9%
+    );
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    /* 透明：窗口是 transparent 的，这里再铺一层矩形底色就会露出方形边框。
+       板子与卡片各自画自己的形状，其余区域让桌面透出来。 */
+    background: transparent;
+    color: var(--ink);
+    font: 13px/1.6 "Segoe UI", "Microsoft YaHei UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+    overflow: hidden;
+  }
+  /* 无系统标题栏，拖这里移动窗口 */
+  .dragbar { position: fixed; top: 0; left: 0; right: 0; height: 34px; -webkit-app-region: drag; z-index: 9; }
+
+  .stage-wrap {
+    -webkit-app-region: drag;   /* 板子区域整块可拖动 */
+    position: relative;
+    width: 560px;
+    height: 700px;
+    margin: 16px auto 0;
+  }
+
+  /* ---------- 板框（不规则形状，仅作背景层） ---------- */
+  .board { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .board::before,
+  .board::after { position: absolute; inset: 0; content: ""; }
+  .board::before {
+    background: linear-gradient(155deg, var(--pink-bright) 0%, var(--pink) 38%, #7d3050 78%, #5e2440 100%);
+    clip-path: var(--board-shape);
+    filter: drop-shadow(0 0 22px rgb(226 85 122 / 30%));
+  }
+  .board::after {
+    inset: 4px;
+    background:
+      radial-gradient(120% 70% at 78% 4%, rgb(255 123 163 / 8%), transparent 60%),
+      radial-gradient(90% 60% at 12% 96%, rgb(216 110 145 / 7%), transparent 62%),
+      linear-gradient(180deg, var(--board) 0%, var(--board-2) 100%);
+    clip-path: var(--board-shape);
+  }
+  /* 板内星点 */
+  .board-stars {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: .55;
+    background:
+      radial-gradient(2px 2px at 16% 22%, var(--pink-bright), transparent 62%),
+      radial-gradient(2px 2px at 84% 15%, var(--coral), transparent 62%),
+      radial-gradient(1.6px 1.6px at 28% 62%, var(--coral), transparent 62%),
+      radial-gradient(1.6px 1.6px at 74% 47%, var(--pink-bright), transparent 62%),
+      radial-gradient(1.4px 1.4px at 44% 30%, var(--pink-bright), transparent 62%),
+      radial-gradient(1.4px 1.4px at 88% 70%, var(--coral), transparent 62%);
+  }
+
+  /* ---------- 立绘：独立层、不裁切、做得比板大 ---------- */
+  .portrait-layer {
+    position: absolute;
+    z-index: 3;                     /* 压在板框之上 */
+    left: -9%;
+    bottom: 6%;
+    width: 118%;                    /* 比板宽，两侧溢出 */
+    height: 96%;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: drop-shadow(0 14px 30px rgb(0 0 0 / 62%));
+    pointer-events: none;
+  }
+  .portrait-layer.swap { animation: swap-in 340ms cubic-bezier(.2,.78,.24,1); }
+  @keyframes swap-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+  .portrait-empty {
+    position: absolute; z-index: 3; left: 0; right: 0; bottom: 42%;
+    text-align: center; color: var(--muted); font-size: 12px;
+  }
+
+  /* ---------- 顶部信息 ---------- */
+  .head {
+    position: absolute; z-index: 5;
+    top: 44px; left: 46px; right: 74px;
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+  .brand-name { font-size: 18px; font-weight: 700; letter-spacing: .05em; }
+  .stars { display: flex; gap: 4px; margin-top: 5px; }
+  .stars i {
+    width: 10px; height: 10px; display: block; background: var(--pink-bright);
+    clip-path: polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%);
+  }
+  .stars i.dim { background: rgb(226 85 122 / 26%); }
+  .win { display: flex; gap: 10px; -webkit-app-region: no-drag; }
+  .dragbar { -webkit-app-region: drag; }
+  .win button {
+    width: 26px; height: 24px; border: 0; background: none; cursor: pointer;
+    color: var(--coral); font-size: 16px; line-height: 1;
+  }
+  .win button:hover { color: var(--pink-bright); }
+
+  /* ---------- 按钮 deck：横条，略微超出板宽 ---------- */
+  .deck {
+    -webkit-app-region: no-drag;   /* 控件不吃拖动 */
+    position: absolute; z-index: 6;
+    left: -14px; right: -14px; bottom: 26px;
+    padding: 12px 20px 14px;
+    background: linear-gradient(180deg, rgb(28 21 37 / 92%), rgb(17 13 24 / 96%));
+    border-top: 1px solid rgb(226 85 122 / 24%);
+    border-bottom: 1px solid rgb(226 85 122 / 16%);
+    box-shadow: 0 10px 26px rgb(0 0 0 / 45%);
+    clip-path: polygon(2.5% 4%, 97.5% 4%, 100% 26%, 99% 74%, 96.5% 96%, 3.5% 96%, 1% 74%, 0 26%);
+  }
+
+  .cycler {
+    display: grid; grid-template-columns: 32px 1fr 32px; align-items: center;
+    height: 36px; margin-bottom: 6px;
+    background: linear-gradient(180deg, #241d2f, #1b1624);
+    border: 1px solid var(--line);
+    clip-path: polygon(2% 0, 98% 0, 100% 26%, 100% 74%, 98% 100%, 2% 100%, 0 74%, 0 26%);
+  }
+  .cycler .label { font-size: 10px; color: var(--muted); letter-spacing: .12em; margin-right: 8px; }
+  .cycler .value { font-size: 13px; font-weight: 600; }
+  .cycler button { height: 100%; border: 0; background: none; cursor: pointer; color: var(--coral); font-size: 17px; line-height: 1; }
+  .cycler button:hover { color: var(--pink-bright); background: rgb(226 85 122 / 10%); }
+  .cycler .center { display: flex; align-items: baseline; justify-content: center; min-width: 0; }
+  .cycler .center .value { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 7px; }
+  .modes button {
+    height: 40px; cursor: pointer; font: inherit; font-size: 13px; color: var(--muted);
+    background: linear-gradient(180deg, #221b2c, #191420);
+    border: 1px solid rgb(226 85 122 / 22%);
+    clip-path: polygon(4% 0, 96% 0, 100% 50%, 96% 100%, 4% 100%, 0 50%);
+    transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+  }
+  .modes button:hover { color: var(--ink); border-color: var(--line); }
+  .modes button[aria-pressed="true"] {
+    color: #fff; font-weight: 600;
+    background: linear-gradient(180deg, var(--pink-bright), var(--pink));
+    border-color: var(--pink-bright);
+    box-shadow: 0 0 16px rgb(226 85 122 / 42%);
+  }
+
+  .actions { display: grid; grid-template-columns: 1fr 92px; gap: 8px; }
+  .primary {
+    height: 54px; cursor: pointer; font: inherit; font-size: 17px; font-weight: 700; letter-spacing: .1em;
+    color: #fff;
+    background: linear-gradient(180deg, var(--pink-bright), var(--pink) 55%, #b83f63);
+    border: 1px solid var(--pink-bright);
+    clip-path: polygon(3% 0, 97% 0, 100% 28%, 100% 72%, 97% 100%, 3% 100%, 0 72%, 0 28%);
+    box-shadow: 0 6px 20px rgb(226 85 122 / 32%);
+  }
+  .primary:hover { filter: brightness(1.08); }
+  .primary:active { transform: translateY(1px); }
+  .secondary {
+    height: 54px; cursor: pointer; font: inherit; font-size: 12px; color: var(--muted);
+    background: linear-gradient(180deg, #221b2c, #191420);
+    border: 1px solid rgb(226 85 122 / 22%);
+    border-radius: 3px;
+  }
+  .secondary:hover { color: var(--ink); border-color: var(--line); }
+
+</style>
+</head>
+<body>
+  <div class="dragbar"></div>
+
+  <div class="stage-wrap">
+    <div class="board"></div>
+    <div class="board-stars"></div>
+    <div class="portrait-layer" id="portrait"></div>
+    <div class="portrait-empty" id="portrait-empty" hidden>该皮肤没有立绘素材</div>
+
+    <div class="head">
+      <div class="brand">
+        <span class="brand-name" id="skin-name">加载中…</span>
+        <span class="stars" id="stars"><i></i><i class="dim"></i><i class="dim"></i><i class="dim"></i><i class="dim"></i></span>
+      </div>
+      <div class="win">
+        <button id="win-min" title="最小化">−</button>
+        <button id="win-close" title="最小化到系统托盘">×</button>
+      </div>
+    </div>
+
+    <div class="deck">
+      <div class="cycler">
+        <button id="skin-prev" title="上一个皮肤">‹</button>
+        <div class="center"><span class="label">皮肤</span><span class="value" id="skin-cycle">—</span></div>
+        <button id="skin-next" title="下一个皮肤">›</button>
+      </div>
+      <div class="cycler">
+        <button id="pet-prev" title="上一个宠物">‹</button>
+        <div class="center"><span class="label">桌宠</span><span class="value" id="pet-cycle">—</span></div>
+        <button id="pet-next" title="下一个宠物">›</button>
+      </div>
+      <div class="modes" id="modes">
+        <button data-mode="dark">☾ 暗夜</button>
+        <button data-mode="light">☀ 日间</button>
+        <button data-mode="auto">⚙ 跟随系统</button>
+      </div>
+      <div class="actions">
+        <button class="primary" id="apply">注入并挂载</button>
+        <button class="secondary" id="remove">撤下皮肤</button>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+  /* 面板逻辑：只通过 IPC 跟主进程说话，不直接碰 CDP。
+     在浏览器里直接打开本文件时走内置示例（便于调界面，也能真正演示"切皮肤换立绘"），
+     此时不触发任何注入。 */
+  let ipcRenderer = null;
+  try { ipcRenderer = require('electron').ipcRenderer; } catch (e) { ipcRenderer = null; }
+
+  const el = (id) => document.getElementById(id);
+
+  /* 浏览器预览用：素材走相对路径，正好能验证"立绘随皮肤切换"这条主需求 */
+  const demo = {
+    skins: [
+      { id: 'cosmic-line', name: '深空线稿 · 水晶少女', author: '（浏览器预览）', url: '../themes/cosmic-line/assets/character-line.png' },
+      { id: 'diana', name: 'Diana · 嘉然', author: '（浏览器预览）', url: '../themes/diana/assets/diana-character-night-v3.png' },
+    ],
+    skinIndex: 0,
+    mode: 'dark',
+    pets: [{ id: 'none', name: '不显示' }, { id: 'choten-chan', name: '超天酱' }, { id: 'mint', name: '薄荷' }, { id: 'kaguyaa', name: '辉夜' }],
+    petIndex: 1,
+    status: { injected: false, port: 9344, rootTheme: 'dark', target: '（浏览器预览：没有目标应用）' },
+    pump: { running: false, port: 9344 },
+    preview: true,
+  };
+  const demoPortrait = () => (demo.skins[demo.skinIndex] || {}).url || '';
+
+  async function invoke(channel, ...args) {
+    if (ipcRenderer) return ipcRenderer.invoke(channel, ...args);
+    if (channel === 'panel:snapshot') return demo;
+    if (channel === 'panel:cycle-skin') {
+      demo.skinIndex = (demo.skinIndex + (args[0] >= 0 ? 1 : -1) + demo.skins.length) % demo.skins.length;
+      return { ...demo, applied: { ok: true, checks: {} } };
+    }
+    if (channel === 'panel:cycle-pet') {
+      demo.petIndex = (demo.petIndex + (args[0] >= 0 ? 1 : -1) + demo.pets.length) % demo.pets.length;
+      return { ...demo };
+    }
+    if (channel === 'panel:set-mode') return { ...demo, mode: args[0], applied: { ok: true, checks: {} } };
+    if (channel === 'panel:apply') return { ...demo, applied: { ok: true, checks: {} } };
+    if (channel === 'panel:remove') return { ...demo, removed: { ok: true, changed: false } };
+    return null;
+  }
+
+  /* 星档 = 当前皮肤在序列里的位置 */
+  let snapshot = null;
+
+  function paintStars(index) {
+    const box = el('stars');
+    box.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+      const star = document.createElement('i');
+      if (i > index) star.className = 'dim';
+      box.appendChild(star);
+    }
+  }
+
+  function portraitUrl(state) {
+    if (state.preview) return demoPortrait();
+    if (!state.portrait) return '';
+    // 主进程给的是绝对路径，面板是 file:// 页面，转成 file URL 才能引
+    return 'file:///' + state.portrait.replace(/\\/g, '/').replace(/#/g, '%23').replace(/\?/g, '%3F');
+  }
+
+  function paint(state) {
+    if (!state) return;
+    snapshot = state;
+    const skins = state.skins || [];
+    const skin = skins[state.skinIndex] || null;
+    el('skin-name').textContent = skin ? skin.name : '没有可用主题';
+    paintStars(state.skinIndex || 0);
+
+    el('skin-cycle').textContent = skin ? skin.name : '—';
+    const pets = state.pets || [];
+    const pet = pets[state.petIndex] || null;
+    el('pet-cycle').textContent = pet ? pet.name : '—';
+
+    const portrait = el('portrait');
+    const url = portraitUrl(state);
+    const css = url ? `url("${url}")` : '';
+    if (portrait.style.backgroundImage !== css) {
+      portrait.style.backgroundImage = css;
+      portrait.classList.remove('swap');
+      void portrait.offsetWidth;
+      portrait.classList.add('swap');
+    }
+    el('portrait-empty').hidden = Boolean(url);
+
+    document.querySelectorAll('#modes button').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset.mode === (state.mode || 'auto')));
+    });
+
+    /* 状态与复核结果不再占板外区块：只在主按钮上给一句短反馈（见 flashButton） */
+    const status = state.status || {};
+    if (!flash.active) {
+      el('apply').textContent = status.injected ? '重新注入' : '注入并挂载';
+    }
+  }
+
+  /* 短反馈：写在主按钮上，几秒后复原。这样不占板外空间，也不新增文字块 */
+  const flash = { active: false, timer: 0 };
+  function flashButton(text, ok) {
+    const button = el('apply');
+    flash.active = true;
+    button.textContent = text;
+    button.style.filter = ok ? '' : 'hue-rotate(-40deg) saturate(1.2)';
+    clearTimeout(flash.timer);
+    flash.timer = setTimeout(() => {
+      flash.active = false;
+      button.style.filter = '';
+      button.textContent = snapshot && snapshot.status && snapshot.status.injected ? '重新注入' : '注入并挂载';
+    }, 3200);
+  }
+  async function refresh() {
+    paint((await invoke('panel:snapshot')) || demo);
+  }
+
+  async function act(channel, args, note) {
+    el("apply").textContent = note + "…";
+    const result = (await invoke(channel, ...(args || []))) || { ...demo, applied: { ok: true, checks: {} } };
+    paint(result);
+    if (result.error) flashButton(note + "失败", false);
+    else if (result.applied) {
+      const failed = Object.entries(result.applied.checks || {}).filter(([, v]) => !v).map(([k]) => k);
+      flashButton(result.applied.ok ? "复核全绿" : "未通过：" + failed.join(","), result.applied.ok);
+    } else if (result.removed) {
+      flashButton(result.removed.changed ? "已撤下" : "未检测到皮肤", true);
+    } else flashButton("完成", true);
+  }
+  el('skin-prev').addEventListener('click', () => act('panel:cycle-skin', [-1], '切换到上一个皮肤'));
+  el('skin-next').addEventListener('click', () => act('panel:cycle-skin', [1], '切换到下一个皮肤'));
+  el('pet-prev').addEventListener('click', () => act('panel:cycle-pet', [-1], '切换到上一个宠物'));
+  el('pet-next').addEventListener('click', () => act('panel:cycle-pet', [1], '切换到下一个宠物'));
+  document.querySelectorAll('#modes button').forEach((button) => {
+    button.addEventListener('click', () => act('panel:set-mode', [button.dataset.mode], `切到${button.textContent.trim()}`));
+  });
+  el('apply').addEventListener('click', () => act('panel:apply', [], '注入'));
+  el('remove').addEventListener('click', () => act('panel:remove', [], '撤下'));
+
+  // 无系统标题栏，窗口按钮走 IPC
+  el('win-min').addEventListener('click', () => invoke('panel:window', 'minimize'));
+  el('win-close').addEventListener('click', () => invoke('panel:window', 'close'));
+
+  refresh();
+</script>
+</body>
+</html>

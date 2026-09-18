@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "id": "diana",
+  "name": "Diana · 嘉然",
+  "author": "Diana（A-SOUL 非商业同人）",
+  "adapterVersion": "painting-skin-diana-v1",
+
+  "app": {
+    "id": "zcode",
+    "debugPort": 9344,
+    "targetUrlHint": "renderer/index.html",
+    "rendererHostClass": "diana-zcode-host"
+  },
+
+  "skin": {
+    "css": "skin/theme.css",
+    "runtime": "skin/runtime-template.js",
+    "tokens": "skin/zcode-tokens.css",
+    "artworkContract": "skin/zcode-artwork-contract.css"
+  },
+
+  "assets": {
+    "characterDark": "assets/diana-character-night-v3.png",
+    "characterLight": "assets/diana-character-day-v2.png",
+    "doodle": "assets/diana-doodle-v2.png",
+    "upper": "assets/diana-upper-line.png",
+    "corner": "assets/diana-corner-line-v7.png",
+    "star": "assets/diana-star-v2.png",
+    "candyWrapped": "assets/diana-candy-wrapped-v1.png",
+    "candyLollipop": "assets/diana-candy-lollipop-v1.png",
+    "acaoHeart": "assets/diana-acao-heart-v3.png",
+    "acaoCheer": "assets/diana-acao-cheer-v1.png"
+  },
+
+  "hero": {
+    "dark": "assets/hero-night.png",
+    "light": "assets/hero-light.png"
+  },
+
+  "modes": ["auto", "dark", "light"],
+
+  "notes": [
+    "modes.auto = 不改 ZCode 的 theme-zai-* 类，皮肤按应用自身的明暗走（run​time-template.js 会记住原值并在 disable 时恢复）。",
+    "dark / light = 由皮肤强制把 <html> 切到对应极性，日夜两套 token 与两套美术同时在 theme.css 里。",
+    "hero-*.png 不是 Diana 原版素材（原版没有壁纸，纯色 surface + 美术）。这里生成它们只为在本注入器里给工作区一个可用的底图，见 README「与 Diana 原版的差异」。"
+  ]
+}

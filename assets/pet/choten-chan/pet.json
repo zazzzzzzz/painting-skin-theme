@@ -1,0 +1,19 @@
+{
+  "id": "choten-chan",
+  "name": "超天酱",
+  "order": 5,
+  "scale": 0.5,
+  "states": [
+    "failed",
+    "idle",
+    "jumping",
+    "look-left-side",
+    "look-right-side",
+    "review",
+    "running",
+    "running-left",
+    "running-right",
+    "waiting",
+    "waving"
+  ]
+}

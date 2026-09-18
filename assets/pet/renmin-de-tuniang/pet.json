@@ -1,0 +1,19 @@
+{
+  "id": "renmin-de-tuniang",
+  "name": "人民的女仆酱",
+  "order": 1,
+  "scale": 0.5,
+  "states": [
+    "failed",
+    "idle",
+    "jumping",
+    "look-left-side",
+    "look-right-side",
+    "review",
+    "running",
+    "running-left",
+    "running-right",
+    "waiting",
+    "waving"
+  ]
+}

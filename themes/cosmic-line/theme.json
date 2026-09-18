@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "cosmic-line",
+  "name": "深空线稿 · 水晶少女",
+  "author": "素材：用户提供（AI 生成线稿）· 主题：painting-skin-theme",
+
+  "adapterVersion": "painting-skin-cosmic-line-v1",
+
+  "app": {
+    "id": "zcode",
+    "debugPort": 9344,
+    "targetUrlHint": "renderer/index.html",
+    "rendererHostClass": "diana-zcode-host"
+  },
+
+  "skin": {
+    "css": "skin/theme.css",
+    "runtime": "skin/runtime-template.js"
+  },
+
+  "assets": {
+    "characterDark": "assets/character-line.png",
+    "characterLight": "assets/character-fill.png",
+    "doodle": "assets/doodle.png",
+    "upper": "assets/upper-line.png",
+    "corner": "assets/corner-line.png",
+    "star": "assets/star.png",
+    "candyWrapped": "assets/crystal-gem.png",
+    "candyLollipop": "assets/crystal-gem.png",
+    "acaoHeart": "assets/butterfly.png",
+    "acaoCheer": "assets/mandala.png"
+  },
+
+  "modes": ["auto", "dark", "light"],
+
+  "notes": [
+    "本主题所有素材都是**纯 alpha 蒙版**：RGB 被统一成白色，alpha 量化成 16 级。因此 CSS 在两种极性下都用 mask + 主题色/渐变填充，线色完全由 token 控制 —— 这正是'色系保持一致'的做法（线稿本身是中性深灰，直接用会在深色底上消失）。",
+    "**立绘是两层**：characterDark = 线条，characterLight = 剪影填充。线稿只有线条带 alpha、轮廓内部透明，直接铺在深色底上就是一团等亮度的白线网（实测观感确实如此）；剪影由 tools/make-silhouette.js 从线稿反算（线条膨胀→外部洪水填充→取内部→腐蚀回退），提供体块，线条叠在上面提供细节。",
+    "素材来自 8 张 AI 生成线稿（白底），处理链：key-lineart.js 抠底 → remove-watermark.js 去'豆包AI生成'水印 → 降采样 → RGB 统一成白 + alpha 量化 16 级。合计 276KB。",
+    "水印用**实测出的比例框**（x≥81.45%w, y≥93.65%h）定点清 alpha，因为实测水印按图像尺寸等比缩放（2048×2048 的三张图同一比例框内着墨数完全一致）。个别素材的画伸进该框（如波形线那张的翅膀到 85% 宽），单独用了 0.94 的窄框。",
+    "candyLollipop 与 candyWrapped 复用同一张水晶线稿，靠 CSS 的尺寸与旋转区分（Diana 原版是两个糖果，这里只有一个水晶可用）。",
+    "配色沿用 cosmic-glass 的实测值（深空 #0d1012 / 亮青 #76bde2 / 冰白 #cfe0ee / 深蓝紫 #505a89），两套皮肤色系一致。"
+  ]
+}

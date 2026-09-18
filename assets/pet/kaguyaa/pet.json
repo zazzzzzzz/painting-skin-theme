@@ -1,0 +1,19 @@
+{
+  "id": "kaguyaa",
+  "name": "辉夜",
+  "order": 6,
+  "scale": 0.5,
+  "states": [
+    "failed",
+    "idle",
+    "jumping",
+    "look-left-side",
+    "look-right-side",
+    "review",
+    "running",
+    "running-left",
+    "running-right",
+    "waiting",
+    "waving"
+  ]
+}
