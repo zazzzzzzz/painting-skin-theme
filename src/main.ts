@@ -8,7 +8,7 @@
  * 原因是 Electron 33 = Node 20.18：既没有全局 WebSocket（CDP 连不上，而且失败是静默的），
  * 也没有 node:sqlite（读库会在加载期直接崩）。这两样都由跑在系统 Node 上的 CLI 子进程承担。 */
 
-import { app, BrowserWindow, ipcMain, Menu, nativeImage, Tray } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, Tray } from 'electron';
 import { execFile, spawn, type ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -53,6 +53,44 @@ function runCli(args: string[], timeoutMs = 90_000): Promise<{ ok: boolean; data
         resolve({ ok: false, error: (error?.message || String(stderr || '')).slice(0, 300) || 'CLI 没有输出' });
         return;
       }
+      try {
+        resolve({ ok: true, data: JSON.parse(text) });
+      } catch {
+        resolve({ ok: false, error: `CLI 输出不是 JSON：${text.slice(0, 200)}` });
+      }
+    });
+  });
+}
+
+/** 跑一次 CLI 并把 stderr 上的进度行实时转发出去（用于"重启并注入"这种要等十几秒的操作）。
+ *  CLI 约定：进度行形如 `PROGRESS <短语>`，stdout 仍然只放最终 JSON。 */
+function runCliStreaming(args: string[], onProgress: (text: string) => void, timeoutMs = 240_000): Promise<{ ok: boolean; data?: unknown; error?: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(NODE_BIN, [CLI, ...args], {
+      cwd: SPAWN_CWD,
+      env: { ...process.env, ...NODE_ENV_EXTRA },
+      windowsHide: true,
+    });
+    let stdout = '';
+    let stderrTail = '';
+    const timer = setTimeout(() => { try { child.kill(); } catch { /* 已退出 */ } }, timeoutMs);
+    child.stdout?.on('data', (chunk) => { stdout += String(chunk); });
+    child.stderr?.on('data', (chunk) => {
+      for (const raw of String(chunk).split(/\r?\n/)) {
+        const line = raw.trim();
+        if (!line) continue;
+        if (line.startsWith('PROGRESS ')) { try { onProgress(line.slice(9).trim()); } catch { /* 面板已关 */ } }
+        else stderrTail = (stderrTail + line).slice(-300);
+      }
+    });
+    child.on('error', (error) => {
+      clearTimeout(timer);
+      resolve({ ok: false, error: error.message });
+    });
+    child.on('exit', () => {
+      clearTimeout(timer);
+      const text = stdout.trim();
+      if (!text) { resolve({ ok: false, error: stderrTail || 'CLI 没有输出' }); return; }
       try {
         resolve({ ok: true, data: JSON.parse(text) });
       } catch {
@@ -132,28 +170,85 @@ ipcMain.handle('panel:cycle-pet', async (_event, step: number) => {
   return { selected: selected.ok ? selected.data : { ok: false, error: selected.error }, ...(await panelSnapshot()) };
 });
 
-ipcMain.handle('panel:set-mode', async (_event, mode: PanelState['mode']) => {
-  panelState.mode = mode;
+/** 当前该用哪个主题：优先用主进程记住的那个（进面板时由 panelSnapshot 填过），
+ *  只有不知道时才去问 CLI。每次操作前都取一次快照的代价不小：目标应用没带调试口时，
+ *  快照里的每个探测都要等超时，点一下先白等好几秒 —— 这是"点了像卡死"的一大来源。 */
+async function ensureSkinId(): Promise<string | null> {
+  if (panelState.skinId) return panelState.skinId;
   const snapshot = await panelSnapshot();
   const current = currentSkinOf(snapshot);
-  if (!current) return { error: '没有可用主题' };
-  const applied = await runCli(['apply', '--skin', current.id, '--mode', mode], 150_000);
+  if (current) panelState.skinId = current.id;
+  return current?.id ?? null;
+}
+
+ipcMain.handle('panel:set-mode', async (_event, mode: PanelState['mode']) => {
+  panelState.mode = mode;
+  const skinId = await ensureSkinId();
+  if (!skinId) return { error: '没有可用主题' };
+  const applied = await runCli(['apply', '--skin', skinId, '--mode', mode], 150_000);
   return { applied: applied.ok ? applied.data : { ok: false, error: applied.error }, ...(await panelSnapshot()) };
 });
 
 ipcMain.handle('panel:apply', async () => {
-  const snapshot = await panelSnapshot();
-  const current = currentSkinOf(snapshot);
-  if (!current) return { error: '没有可用主题' };
-  const applied = await runCli(['apply', '--skin', current.id, '--mode', panelState.mode], 150_000);
+  const skinId = await ensureSkinId();
+  if (!skinId) return { error: '没有可用主题' };
+  const applied = await runCli(['apply', '--skin', skinId, '--mode', panelState.mode], 150_000);
   return { applied: applied.ok ? applied.data : { ok: false, error: applied.error }, ...(await panelSnapshot()) };
 });
 
 ipcMain.handle('panel:remove', async () => {
-  const snapshot = await panelSnapshot();
-  const current = currentSkinOf(snapshot);
-  const removed = await runCli(['remove', '--skin', current?.id ?? ''], 60_000);
+  const skinId = await ensureSkinId();
+  const removed = await runCli(['remove', '--skin', skinId ?? ''], 60_000);
   return { removed: removed.ok ? removed.data : { ok: false, error: removed.error }, ...(await panelSnapshot()) };
+});
+
+/* 恢复默认路径：丢掉手动指定的 exe，按默认路径重新解析并写进本机配置 */
+ipcMain.handle('panel:defaults', async () => {
+  const resolved = await runCli(['defaults', '--reset'], 30_000);
+  return { resolved: resolved.ok ? resolved.data : { ok: false, error: resolved.error }, ...(await panelSnapshot()) };
+});
+
+/* 手动指定：弹系统的文件对话框选 exe，选完存进本机配置（覆盖自动扫描的结果） */
+ipcMain.handle('panel:pick-exe', async () => {
+  const snapshot = await panelSnapshot();
+  const appInfo = snapshot.app as { exePath?: string | null } | undefined;
+  const current = appInfo?.exePath ?? null;
+  const picked = await dialog.showOpenDialog({
+    title: '选择 ZCode 的可执行文件',
+    defaultPath: current ? path.dirname(current) : undefined,
+    filters: [{ name: '可执行文件', extensions: ['exe'] }],
+    properties: ['openFile'],
+  });
+  if (picked.canceled || !picked.filePaths[0]) return { canceled: true, ...(await panelSnapshot()) };
+  const saved = await runCli(['setexe', picked.filePaths[0]], 30_000);
+  return {
+    saved: saved.ok ? saved.data : { ok: false, error: saved.error },
+    picked: picked.filePaths[0],
+    ...(await panelSnapshot()),
+  };
+});
+
+/* 以调试端口重启目标应用并立刻注入。
+ * 之所以由面板自己发起：重启会结束目标应用（连带结束里面正在跑的会话），
+ * 这个过程必须由用户在面板上明确点一下，不能塞进普通注入里悄悄做。
+ *
+ * 三处刻意为之（都是"点了像卡死"的来源，实测过一次）：
+ *   · 一次子进程搞定 —— CLI 用 --panel-state 把面板状态一起带回来，不再前后各取一次快照；
+ *   · 进度实时转发 —— 重启要等应用真正启动，按钮上得看得见在做什么；
+ *   · 不预先取快照 —— 目标应用没带调试口时，每个探测都要等超时，点一下先白等好几秒。 */
+ipcMain.handle('panel:relaunch-apply', async (event) => {
+  const skinId = await ensureSkinId();
+  if (!skinId) return { error: '没有可用主题' };
+  const result = await runCliStreaming(
+    ['relaunch', '--skin', skinId, '--mode', panelState.mode, '--apply', '--progress', '--panel-state'],
+    (text) => { try { event.sender.send('panel:progress', text); } catch { /* 面板已关 */ } },
+  );
+  const data = result.ok ? (result.data as { relaunched?: unknown; applied?: unknown; panel?: Record<string, unknown> }) : null;
+  return {
+    relaunched: data?.relaunched ?? { ok: false, error: result.error },
+    applied: data?.applied ?? null,
+    ...(data?.panel ?? await panelSnapshot()),
+  };
 });
 
 ipcMain.handle('panel:toggle-pump', (_event, enabled: boolean) => {

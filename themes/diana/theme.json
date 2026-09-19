@@ -7,6 +7,7 @@
 
   "app": {
     "id": "zcode",
+    "processName": "ZCode.exe",
     "debugPort": 9344,
     "targetUrlHint": "renderer/index.html",
     "rendererHostClass": "diana-zcode-host"

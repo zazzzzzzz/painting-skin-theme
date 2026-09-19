@@ -17,6 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { CdpSession, fetchTargets, pickRendererTarget } from './cdp';
+import { debugPortCandidates } from './target-app';
 import { listSkins, loadSkin, readAssetDataUrl, readText, type SkinEntry } from './theme-store';
 import { buildUsageBarScript } from './usage-bar';
 import { buildPetScript, getPetRegistry, petSelectExpression } from './pet';
@@ -40,7 +41,7 @@ export type { SkinEntry } from './theme-store';
 
 /* 探测超时：面板一次快照要连着开几次 CDP（状态 / 宠物 / 已注入皮肤），
  * 主机繁忙时 1.5s 会假性失败（实测：面板显示未挂载而实际已注入）。 */
-const PROBE_TIMEOUT_MS = 4000;
+const PROBE_TIMEOUT_MS = 1500;
 
 /** 运行时的复核项：结构与 Diana 适配器 verify 命令同口径 */
 interface MountReport {
@@ -260,8 +261,11 @@ export async function selectPet(petId: string): Promise<{ ok: boolean; error?: s
   }
 }
 
-export async function applySkin(skin: SkinEntry, mode: SkinMode): Promise<ApplyResult> {  const { manifest } = skin;
-  const candidates = [manifest.app.debugPort, 9344, 9333].filter((value, index, all) => all.indexOf(value) === index);
+export async function applySkin(skin: SkinEntry, mode: SkinMode): Promise<ApplyResult> {
+  const { manifest } = skin;
+  /* 端口候选与"以调试端口重启"共用一份（target-app.debugPortCandidates）：
+     主端口被占用时重启会挑备选端口，这边必须能找到它，否则重启完还是注入不上去。 */
+  const candidates = debugPortCandidates(manifest.app);
   let target: { port: number; target: NonNullable<ReturnType<typeof pickRendererTarget>> } | null = null;
   for (const port of candidates) {
     const found = pickRendererTarget(await fetchTargets(port, 1500), manifest.app.targetUrlHint);
@@ -270,7 +274,7 @@ export async function applySkin(skin: SkinEntry, mode: SkinMode): Promise<ApplyR
   if (!target) {
     return {
       ok: false, port: candidates[0], mode, mounted: false, rootTheme: null, workspace: null, rail: null,
-      checks: {},
+      checks: {}, needsDebugPort: true,
       error: `未找到调试端点。请确认目标应用已带 --remote-debugging-port 启动（候选端口 ${candidates.join('/')}），且本机代理没有截胡回环请求。`,
     };
   }

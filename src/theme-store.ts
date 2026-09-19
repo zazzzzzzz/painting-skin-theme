@@ -15,6 +15,11 @@ export interface SkinManifest {
     debugPort: number;
     targetUrlHint: string;
     rendererHostClass: string;
+    /** 目标应用的进程名（缺省 <app.id>.exe）。用于判断"有没有正在运行的实例"与关闭它。 */
+    processName?: string;
+    /** 仓库自带的默认安装路径；机器上实际的路径由本机配置覆盖（见 target-app.ts） */
+    exePath?: string;
+    exePaths?: string[];
   };
   skin: {
     css: string;
@@ -66,6 +71,17 @@ function validate(manifest: SkinManifest): void {
   if (!manifest.app?.targetUrlHint) throw new Error('app.targetUrlHint 不能为空');
   if (!Number.isInteger(manifest.app?.debugPort) || manifest.app.debugPort <= 0) {
     throw new Error('app.debugPort 必须是正整数');
+  }
+  /* 目标应用的可执行文件是**要被执行、被结束进程**的路径，校验从严：
+     只接受绝对路径，且必须落在本地磁盘（不接受 UNC），避免一个主题文件就指到任意程序上。 */
+  if (manifest.app.processName !== undefined && !/^[A-Za-z0-9._-]+\.exe$/i.test(manifest.app.processName)) {
+    throw new Error(`app.processName 必须是 .exe 文件名：${manifest.app.processName}`);
+  }
+  const exePaths = [manifest.app.exePath, ...(manifest.app.exePaths ?? [])].filter((value): value is string => value !== undefined);
+  for (const value of exePaths) {
+    if (typeof value !== 'string' || !path.isAbsolute(value) || value.startsWith('\\\\')) {
+      throw new Error(`app.exePath 必须是本地绝对路径：${String(value)}`);
+    }
   }
   requireRelative(manifest.skin?.css, 'skin.css');
   requireRelative(manifest.skin?.runtime, 'skin.runtime');

@@ -68,7 +68,11 @@ running-left / running-right / review / jumping / failed / waiting / waving）�
 
 - 皮肤 / 桌宠各一个 **‹ › 循环切换**（按现有顺序轮换，就地生效，不重启 ZCode）
 - 明暗三态（暗夜 / 日间 / 跟随系统）
+- **ZCode 路径行**：显示当前用的可执行文件与调试端口状态（绿点=可注入），右侧两个按钮
+  ——「默认路径」回到按默认路径解析，「选择…」手动指定 exe
 - 主按钮：注入并挂载 / 重新注入；副按钮：撤下皮肤
+- 注入失败且原因是"目标应用没带调试端口启动"时，主按钮**变成「重启 ZCode 并注入」**，
+  点一下即以 `--remote-debugging-port` 重启 ZCode 并接着注入（会结束当前 ZCode 进程，会话记录不受影响）
 - 窗口为**透明无边框**，板子区域整块可拖动，右上 − × 自绘
 - **关闭 = 收进系统托盘**（注入与用量泵继续跑），托盘菜单提供"显示面板 / 退出"
 - 应用图标为自绘四芒星（非 Electron 默认图标）
@@ -86,6 +90,9 @@ node dist/cli.js remove  [--skin diana]  # 撤下
 node dist/cli.js payload [--skin diana] [--mode auto]   # 只打印将执行的表达式，供外部转发
 node dist/cli.js pump    [--skin diana]  # 前台常驻用量泵
 node dist/cli.js panel                   # 输出面板所需的全部状态（面板通过它取数）
+node dist/cli.js defaults [--reset]      # 按默认路径解析 ZCode 位置（--reset 丢掉手动指定的）
+node dist/cli.js setexe <绝对路径>        # 手动指定 ZCode 可执行文件
+node dist/cli.js relaunch [--apply]      # 以调试端口重启 ZCode；--apply 之后立刻注入
 ```
 
 ### ⑨ 打包
@@ -101,6 +108,32 @@ npm run pack:win        # → release/PaintingSkinTheme-Setup-<version>.exe（NS
 `tools/` 下是零依赖的素材处理脚本（抠底、取色、矢量栅格化、剪影反算、水印清除、碎片合成），
 用于把参考图/生成图加工成主题素材：抠底、降采样、alpha 量化、按素材风格补画装饰线。
 
+### ⑪ 调试端口与 ZCode 路径
+
+注入通道是 CDP，而 `--remote-debugging-port` **只在应用启动时生效**——用户自己双击打开的
+ZCode 没有调试口，这时任何注入都会失败，且在应用内部没有补救手段。本项目把这一步补上：
+
+- **路径从哪来**（优先级从高到低）：本机配置 → 主题清单 `app.exePath` → 内置默认路径
+  （`%LOCALAPPDATA%\Programs\ZCode`、`Program Files\ZCode` 等，以及本机实测的 `D:\Zcode\ZCode.exe`）。
+  不做注册表/快捷方式/全盘扫描：默认路径 + 手动指认已经够用，行为也可预期。
+- **本机配置**存在 `~/.painting-skin-theme/app.json`（`DIANA_SKIN_CONFIG` 可改路径），
+  **不写进主题文件**——主题是仓库里的源文件，写机器相关的绝对路径会污染 git 工作树，
+  打包后主题目录还在 `app.asar` 里、根本不可写。解析到默认路径时会顺手写进配置（自动配置）。
+- **重启**（`relaunch`）：解析 exe → `taskkill /T /F` 结束实例（连同进程树）→ 等端口释放
+  → 挑一个能绑上的端口（主端口被占用时 CDP 会**静默**绑定失败：应用照常起来、界面照常用，就是没有调试口，
+  所以备选 9333/9345，注入侧也用同一份候选）→ 带 `--remote-debugging-port` 分离式拉起
+  （`detached + unref`）→ 轮询 `/json/version` 直到 CDP 就绪（最长 45s，调试口已通则直接短路不杀进程）。
+- **拉起的启动环境必须清洗**：面板与 CLI 之间约定用应用自身的 Electron 当 Node
+  （`ELECTRON_RUN_AS_NODE=1`，见 `src/main.ts`），这个变量会被继承到被拉起的应用上——
+  于是目标应用以**纯 Node** 启动：不开界面、不看命令行参数、报错秒退。
+  实测（`.verify/env-inherit-ab.js`）继承时 Electron 应用的 `require('electron').ipcMain` 是 `undefined`，
+  秒退；清掉后 GUI 正常。所以启动前要删 `ELECTRON_RUN_AS_NODE` / `ELECTRON_RENDERER_URL` /
+  `VITE_DEV_SERVER_URL` / `MAIN_VITE_DEV_SERVER_URL` / `ELECTRON_NO_ATTACH_CONSOLE` / `NODE_OPTIONS`
+  （Dream-Work-Theme 的启动器同样要清这几个）。
+- **失败要快、要看得见**：应用若在启动后立刻退出（环境被污染、单实例锁未释放），
+  最多 5s 就报"启动后立刻退出（退出码 N）"，而不是白等满超时；每一步都写进
+  `~/.painting-skin-theme/relaunch.log`，面板按钮上实时显示当前进度（关闭中 / 启动中 / 注入中…）。
+
 ---
 
 ## 项目结构
@@ -113,6 +146,7 @@ src/                        引擎与应用层
   injector.ts               payload 组装 · 注入 · 复核 · 撤下 · 状态；用量条与桌宠的注入
   cdp.ts                    CDP 会话与目标发现（零依赖，用 Node 自带 fetch / WebSocket）
   theme-store.ts            主题清单校验（路径只收安全相对路径、逐段防越界）与素材读取
+  target-app.ts             目标应用定位：默认路径解析 / 本机配置 / 以调试端口重启
   usage-db.ts               读 ZCode 的用量库（node:sqlite，只读）并聚合出快照
   usage-pump.ts             fs.watch + 限频 + 心跳，经 CDP 把快照推给页面
   usage-bar.ts              用量条的页面端脚本

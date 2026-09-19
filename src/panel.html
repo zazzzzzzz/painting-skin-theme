@@ -172,6 +172,26 @@
     box-shadow: 0 0 16px rgb(226 85 122 / 42%);
   }
 
+  /* ---------- 目标应用行：deck 最下方那一行，路径 + 调试端口状态 + 默认路径/选择 ---------- */
+  .target {
+    display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 6px;
+    height: 30px; margin-top: 7px; padding: 0 8px 0 10px;
+    background: linear-gradient(180deg, #1d1726, #171220);
+    border: 1px solid rgb(226 85 122 / 16%);
+    clip-path: polygon(1.5% 0, 98.5% 0, 100% 50%, 98.5% 100%, 1.5% 100%, 0 50%);
+    font-size: 11px; color: var(--muted);
+  }
+  .target .center { display: flex; align-items: center; min-width: 0; }
+  .target .label { letter-spacing: .12em; margin-right: 8px; flex: none; }
+  .target .value { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .target .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--bad); margin-right: 7px; flex: none; }
+  .target .dot.ok { background: var(--ok); }
+  .target button {
+    height: 22px; padding: 0 9px; cursor: pointer; font: inherit; font-size: 11px; color: var(--coral);
+    background: rgb(226 85 122 / 10%); border: 1px solid rgb(226 85 122 / 26%); border-radius: 3px;
+  }
+  .target button:hover { color: var(--pink-bright); border-color: var(--line); }
+
   .actions { display: grid; grid-template-columns: 1fr 92px; gap: 8px; }
   .primary {
     height: 54px; cursor: pointer; font: inherit; font-size: 17px; font-weight: 700; letter-spacing: .1em;
@@ -233,6 +253,15 @@
         <button class="primary" id="apply">注入并挂载</button>
         <button class="secondary" id="remove">撤下皮肤</button>
       </div>
+      <div class="target" id="target">
+        <div class="center">
+          <span class="dot" id="target-dot"></span>
+          <span class="label">ZCode</span>
+          <span class="value" id="target-path">探测中…</span>
+        </div>
+        <button id="target-default" title="回到默认路径（丢掉手动指定的路径）">默认路径</button>
+        <button id="target-pick" title="手动选择 ZCode 的可执行文件">选择…</button>
+      </div>
     </div>
   </div>
 
@@ -258,6 +287,7 @@
     petIndex: 1,
     status: { injected: false, port: 9344, rootTheme: 'dark', target: '（浏览器预览：没有目标应用）' },
     pump: { running: false, port: 9344 },
+    app: { exePath: 'D:\\Zcode\\ZCode.exe', source: '（浏览器预览）', processName: 'ZCode.exe', running: true, endpointReady: false, configPath: '~/.painting-skin-theme/app.json' },
     preview: true,
   };
   const demoPortrait = () => (demo.skins[demo.skinIndex] || {}).url || '';
@@ -276,6 +306,9 @@
     if (channel === 'panel:set-mode') return { ...demo, mode: args[0], applied: { ok: true, checks: {} } };
     if (channel === 'panel:apply') return { ...demo, applied: { ok: true, checks: {} } };
     if (channel === 'panel:remove') return { ...demo, removed: { ok: true, changed: false } };
+    if (channel === 'panel:defaults') return { ...demo, resolved: { candidates: [{ path: 'D:\\Zcode\\ZCode.exe', source: '默认路径', chosen: true }], saved: { exePath: 'D:\\Zcode\\ZCode.exe' } } };
+    if (channel === 'panel:pick-exe') return { ...demo, picked: 'D:\\Zcode\\ZCode.exe', saved: { saved: { exePath: 'D:\\Zcode\\ZCode.exe' } } };
+    if (channel === 'panel:relaunch-apply') return { ...demo, relaunched: { ok: true }, applied: { ok: true, checks: {} } };
     return null;
   }
 
@@ -327,16 +360,34 @@
       button.setAttribute('aria-pressed', String(button.dataset.mode === (state.mode || 'auto')));
     });
 
-    /* 状态与复核结果不再占板外区块：只在主按钮上给一句短反馈（见 flashButton） */
-    const status = state.status || {};
-    if (!flash.active) {
-      el('apply').textContent = status.injected ? '重新注入' : '注入并挂载';
+    /* 目标应用行：绿点 = 调试端口可用（能直接注入）；红点 = 没有调试口或没在跑。
+       调试端口只在应用启动时生效，所以"红点 + 正在运行"是注入失败最常见的原因，
+       这时主按钮会变成"重启 ZCode 并注入"（见 applyLabel / 下面的点击处理）。 */
+    const appInfo = state.app || {};
+    el('target-dot').className = 'dot' + (appInfo.endpointReady ? ' ok' : '');
+    if (appInfo.exePath) {
+      const suffix = appInfo.endpointReady ? '' : (appInfo.running ? '（运行中 · 无调试口）' : '（未运行）');
+      el('target-path').textContent = appInfo.exePath + suffix;
+      el('target-path').title = `${appInfo.exePath}\n来源：${appInfo.source || '未知'}｜配置：${appInfo.configPath || ''}`;
+    } else {
+      el('target-path').textContent = '未找到安装路径，点"默认路径"或"选择…"';
+      el('target-path').title = appInfo.configPath ? `配置文件：${appInfo.configPath}` : '';
     }
+
+    /* 状态与复核结果不再占板外区块：只在主按钮上给一句短反馈（见 flashButton） */
+    if (!flash.active) el('apply').textContent = applyLabel();
+  }
+
+  /* 主按钮的两副面孔：平时是"注入并挂载"，上一次注入因为缺调试端口失败时变成"重启 ZCode 并注入" */
+  let pendingRelaunch = false;
+  function applyLabel() {
+    if (pendingRelaunch) return '重启 ZCode 并注入';
+    return snapshot && snapshot.status && snapshot.status.injected ? '重新注入' : '注入并挂载';
   }
 
   /* 短反馈：写在主按钮上，几秒后复原。这样不占板外空间，也不新增文字块 */
   const flash = { active: false, timer: 0 };
-  function flashButton(text, ok) {
+  function flashButton(text, ok, holdMs) {
     const button = el('apply');
     flash.active = true;
     button.textContent = text;
@@ -345,8 +396,8 @@
     flash.timer = setTimeout(() => {
       flash.active = false;
       button.style.filter = '';
-      button.textContent = snapshot && snapshot.status && snapshot.status.injected ? '重新注入' : '注入并挂载';
-    }, 3200);
+      button.textContent = applyLabel();
+    }, holdMs || 3200);
   }
   async function refresh() {
     paint((await invoke('panel:snapshot')) || demo);
@@ -359,11 +410,66 @@
     if (result.error) flashButton(note + "失败", false);
     else if (result.applied) {
       const failed = Object.entries(result.applied.checks || {}).filter(([, v]) => !v).map(([k]) => k);
-      flashButton(result.applied.ok ? "复核全绿" : "未通过：" + failed.join(","), result.applied.ok);
+      /* 复核项可能一条都没列出（失败发生在复核之前，比如找不到调试端点），
+         这时必须回落到 error 文本 —— 否则按钮上会只剩一个空的"未通过：" */
+      const detail = failed.length ? failed.join(",") : (result.applied.error || "未知原因");
+      const ok = Boolean(result.applied.ok);
+      /* 缺少调试端口是**可以补救**的失败：把主按钮换成重启入口，1.4s 后就露出来 */
+      pendingRelaunch = !ok && Boolean(result.applied.needsDebugPort);
+      flashButton(ok ? "复核全绿" : "未通过：" + detail, ok, pendingRelaunch ? 1400 : 3200);
     } else if (result.removed) {
       flashButton(result.removed.changed ? "已撤下" : "未检测到皮肤", true);
     } else flashButton("完成", true);
   }
+
+  /* 恢复默认路径：丢掉手动指定的 exe，按默认路径重新解析（并写进本机配置） */
+  async function defaultTarget() {
+    el('apply').textContent = '按默认路径解析…';
+    const result = (await invoke('panel:defaults')) || demo;
+    paint(result);
+    const candidates = ((result.resolved || {}).candidates) || [];
+    flashButton(candidates.length ? '已用默认路径' : '默认路径下没找到', candidates.length > 0);
+  }
+
+  /* 手动指定：系统文件对话框选 exe，选完覆盖自动扫描的结果 */
+  async function pickTarget() {
+    el('apply').textContent = '等待选择文件…';
+    const result = (await invoke('panel:pick-exe')) || demo;
+    if (result.canceled) { paint(result); flashButton('已取消', true); return; }
+    paint(result);
+    flashButton((result.saved || {}).saved ? '已保存 ZCode 路径' : '保存失败', Boolean((result.saved || {}).saved));
+  }
+
+  /* 重启并注入：会结束正在运行的 ZCode（连带里面的会话），所以必须是用户明确点这一下。
+     过程中按钮上实时显示主进程转发来的进度（关闭中 / 启动中 / 注入中…），不然十几秒没有任何反应很像卡死。 */
+  async function relaunchAndApply() {
+    el('apply').textContent = '准备重启…';
+    const result = (await invoke('panel:relaunch-apply')) || demo;
+    paint(result);
+    const relaunched = result.relaunched || {};
+    if (!relaunched.ok) {
+      pendingRelaunch = false;
+      const reason = String(relaunched.error || '未知原因');
+      // 完整原因放 title（按钮上放不下），日志路径已含在原因里
+      el('apply').title = reason;
+      flashButton('重启失败：' + reason.slice(0, 60), false, 8000);
+      return;
+    }
+    const applied = result.applied || {};
+    const failed = Object.entries(applied.checks || {}).filter(([, v]) => !v).map(([k]) => k);
+    const detail = failed.length ? failed.join(',') : (applied.error || '未知原因');
+    const ok = Boolean(applied.ok);
+    pendingRelaunch = !ok && Boolean(applied.needsDebugPort);
+    flashButton(ok ? '已重启并注入' : '注入未通过：' + detail, ok, ok ? 3200 : 8000);
+  }
+
+  /* 主进程转发的重启进度：直接写在主按钮上 */
+  if (ipcRenderer) {
+    ipcRenderer.on('panel:progress', (_event, text) => {
+      if (typeof text === 'string' && text) el('apply').textContent = text;
+    });
+  }
+
   el('skin-prev').addEventListener('click', () => act('panel:cycle-skin', [-1], '切换到上一个皮肤'));
   el('skin-next').addEventListener('click', () => act('panel:cycle-skin', [1], '切换到下一个皮肤'));
   el('pet-prev').addEventListener('click', () => act('panel:cycle-pet', [-1], '切换到上一个宠物'));
@@ -371,8 +477,13 @@
   document.querySelectorAll('#modes button').forEach((button) => {
     button.addEventListener('click', () => act('panel:set-mode', [button.dataset.mode], `切到${button.textContent.trim()}`));
   });
-  el('apply').addEventListener('click', () => act('panel:apply', [], '注入'));
+  el('apply').addEventListener('click', () => {
+    if (pendingRelaunch) relaunchAndApply();
+    else act('panel:apply', [], '注入');
+  });
   el('remove').addEventListener('click', () => act('panel:remove', [], '撤下'));
+  el('target-default').addEventListener('click', defaultTarget);
+  el('target-pick').addEventListener('click', pickTarget);
 
   // 无系统标题栏，窗口按钮走 IPC
   el('win-min').addEventListener('click', () => invoke('panel:window', 'minimize'));

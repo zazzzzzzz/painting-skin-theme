@@ -20,6 +20,9 @@ export interface ApplyResult {
   rail: { count: number; profile: string } | null;
   /** 复核项，全部 true 才算挂载成功 */
   checks: Record<string, boolean>;
+  /** 失败原因是"目标应用没有带调试端口启动" —— 面板据此把主按钮换成"重启 ZCode 并注入"，
+   *  而不是让用户自己去猜为什么注入不上去 */
+  needsDebugPort?: boolean;
   /** 用量条与宠物：这两个是"功能"而非皮肤内容，独立注入，失败不影响皮肤本身 */
   extra?: {
     usageBar: {
