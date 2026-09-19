@@ -6,15 +6,15 @@
  */
 
 html.diana-zcode-host.theme-zai-dark {
-  --diana-zcode-surface: #0d0c0f;
-  --diana-zcode-panel: #171419;
-  --diana-zcode-panel-strong: #1d191f;
-  --diana-zcode-sidebar: #19161a;
-  --diana-zcode-ink: #f3eef0;
-  --diana-zcode-muted: #aaa1a7;
-  --diana-zcode-accent: #d86e91;
-  --diana-zcode-accent-soft: #38242d;
-  --diana-zcode-border: #302930;
+  --diana-zcode-surface: #120c11;
+  --diana-zcode-panel: #1c121a;
+  --diana-zcode-panel-strong: #261826;
+  --diana-zcode-sidebar: #1e131c;
+  --diana-zcode-ink: #f7eef5;
+  --diana-zcode-muted: #b4a2b1;
+  --diana-zcode-accent: #cc11a6;
+  --diana-zcode-accent-soft: #3d1031;
+  --diana-zcode-border: #3a2334;
 
   --color-background: var(--diana-zcode-surface);
   --color-background-win-alt: var(--diana-zcode-panel-strong);
@@ -25,19 +25,19 @@ html.diana-zcode-host.theme-zai-dark {
   --color-popover: var(--diana-zcode-panel-strong);
   --color-popover-header: var(--diana-zcode-panel);
   --color-input: var(--diana-zcode-panel-strong);
-  --color-border: rgb(216 110 145 / 17%);
-  --color-border-hover: rgb(216 110 145 / 28%);
-  --color-hover: rgb(216 110 145 / 9%);
-  --color-selected: rgb(216 110 145 / 17%);
-  --color-surface: rgb(216 110 145 / 7%);
-  --color-surface-hover: rgb(216 110 145 / 14%);
+  --color-border: rgb(204 17 166 / 17%);
+  --color-border-hover: rgb(204 17 166 / 28%);
+  --color-hover: rgb(204 17 166 / 9%);
+  --color-selected: rgb(204 17 166 / 17%);
+  --color-surface: rgb(204 17 166 / 7%);
+  --color-surface-hover: rgb(204 17 166 / 14%);
   --color-accent: var(--diana-zcode-accent-soft);
   --color-brand: var(--diana-zcode-ink);
   --color-primary: var(--diana-zcode-ink);
   --color-primary-foreground: var(--diana-zcode-surface);
   --color-foreground: var(--diana-zcode-ink);
   --color-foreground-subtle: var(--diana-zcode-muted);
-  --color-foreground-subtlest: rgb(170 161 167 / 58%);
+  --color-foreground-subtlest: rgb(180 162 177 / 58%);
 
   /* ---- 应用自己的"浮层 / 面"级 token ----
    * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
@@ -59,18 +59,18 @@ html.diana-zcode-host.theme-zai-dark {
 }
 
 html.diana-zcode-host.theme-zai-light {
-  --diana-zcode-surface: #fbf8f6;
+  --diana-zcode-surface: #fdf6fb;
   --diana-zcode-panel: #ffffff;
-  --diana-zcode-panel-strong: #fff8fa;
-  --diana-zcode-sidebar: #f8f3f5;
-  --diana-zcode-ink: #2c2529;
-  --diana-zcode-muted: #74686f;
-  --diana-zcode-accent: #b84970;
-  --diana-zcode-accent-soft: #f2dce3;
-  --diana-zcode-border: #e8dfe2;
+  --diana-zcode-panel-strong: #fff6fd;
+  --diana-zcode-sidebar: #fbf1f8;
+  --diana-zcode-ink: #2e2130;
+  --diana-zcode-muted: #7f6a7b;
+  --diana-zcode-accent: #a80086;
+  --diana-zcode-accent-soft: #f7d9f0;
+  --diana-zcode-border: #eedcea;
 
   --color-background: var(--diana-zcode-surface);
-  --color-background-win-alt: #f2ecef;
+  --color-background-win-alt: #f7ecf5;
   --color-header: var(--diana-zcode-panel);
   --color-panel: var(--diana-zcode-panel);
   --color-sidebar: var(--diana-zcode-sidebar);
@@ -78,19 +78,19 @@ html.diana-zcode-host.theme-zai-light {
   --color-popover: var(--diana-zcode-panel);
   --color-popover-header: var(--diana-zcode-panel-strong);
   --color-input: var(--diana-zcode-panel);
-  --color-border: rgb(184 73 112 / 16%);
-  --color-border-hover: rgb(184 73 112 / 27%);
-  --color-hover: rgb(184 73 112 / 7%);
-  --color-selected: rgb(184 73 112 / 13%);
-  --color-surface: rgb(184 73 112 / 5%);
-  --color-surface-hover: rgb(184 73 112 / 10%);
+  --color-border: rgb(184 15 148 / 16%);
+  --color-border-hover: rgb(184 15 148 / 27%);
+  --color-hover: rgb(184 15 148 / 7%);
+  --color-selected: rgb(184 15 148 / 13%);
+  --color-surface: rgb(184 15 148 / 5%);
+  --color-surface-hover: rgb(184 15 148 / 10%);
   --color-accent: var(--diana-zcode-accent-soft);
   --color-brand: var(--diana-zcode-ink);
   --color-primary: var(--diana-zcode-ink);
   --color-primary-foreground: var(--diana-zcode-panel);
   --color-foreground: var(--diana-zcode-ink);
   --color-foreground-subtle: var(--diana-zcode-muted);
-  --color-foreground-subtlest: rgb(116 104 111 / 56%);
+  --color-foreground-subtlest: rgb(127 106 123 / 56%);
 
   /* ---- 应用自己的"浮层 / 面"级 token ----
    * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的

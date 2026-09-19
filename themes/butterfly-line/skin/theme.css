@@ -1,20 +1,45 @@
+/* 蝶影线稿 · 粉发立绘 —— ZCode 皮肤样式层。
+ *
+ * **实现基准 = themes/diana/skin/theme.css**：token 双套、组件钩子、美术层几何、消息导轨全部照搬。
+ * **配色基准 = 立绘眼睛的玫红**（实测自 素材/2.png 的虹膜，见下方 token 块顶部的说明），
+ * 素材则全部来自 `素材/`（见 theme.json 的 notes）。
+ *
+ * 命名空间刻意保留 `diana-`（`--diana-zcode-*`、`diana-zcode-host`、`#diana-zcode-chrome`）：
+ * 这是页面端运行时与素材角色的硬约定 —— 运行时把清单里的 assets 角色映射成 `--diana-zcode-image-<role>`
+ * 再喂给这套 CSS，改名要连运行时一起动，不属于"换皮"的范围。
+ *
+ * 四处需要留意的写法（都是踩过坑的）：
+ *   ① 暗夜 / 日间两套 token 各挂在 `theme-zai-dark` / `theme-zai-light` 下，运行时按宿主极性补齐；
+ *   ② 角线 / 上缘线 / 涂鸦三条几何规则的选择器要显式写 `#diana-zcode-chrome >`，才压得住同样被注入的
+ *      Diana 契约表（它写的是 `#chrome > .x`，比裸 `.x` 多一个 id，否则主题里的几何全成死规则）；
+ *      上缘线还要显式复位 `width / aspect-ratio`，因为契约给它的是一个 342×127 的盒子；
+ *   ③ 立绘是**全彩插画**（素材/2.png 原图直出）：两种极性都直接铺素材本身，只是压暗 / 提亮的滤镜不同。
+ *      "主题色 + 形状蒙版"那套画法只适用于线稿素材 —— 这里用在装饰上；
+ *   ④ 素材角色名沿用 diana 的 `characterDark` / `characterLight`，本主题两者指向同一张图。 */
+
+/* 配色基准 = **立绘眼睛的玫红**（不是沿用 diana 的粉莓）。
+ * 实测（tools/eye-color.js）：立绘双眼里"蓝>绿"的品红家族像素，最饱和的 15% 均值 = #cc11a6
+ * （色相 312°、饱和 .92），最暗 25% #a41e7b、最亮 10% #c4618b —— 即色相 312~335° 的玫红/品红区间。
+ * 于是：族中心取 318°，**明度阶梯完全沿用 diana 那一套**（只换色相，中性角色几乎不变、彩色角色提高饱和），
+ * 强调色直接用实测的虹膜核心 #cc11a6，装饰填充取同族三档（berry 深 / coral 中 / gold 亮）。
+ * 对比度实测：ink/surface 17.0、muted/surface 8.1、rail-current/sidebar 7.2。 */
 html.diana-zcode-host.theme-zai-dark {
-  --diana-zcode-surface: #0d0c0f;
-  --diana-zcode-panel: #171419;
-  --diana-zcode-panel-strong: #1d191f;
-  --diana-zcode-sidebar: #19161a;
-  --diana-zcode-ink: #f3eef0;
-  --diana-zcode-muted: #a9a1a7;
-  --diana-zcode-accent: #d86e91;
-  --diana-zcode-accent-soft: #38242d;
-  --diana-zcode-border: #2b262d;
-  --diana-zcode-line-coral: #cc758a;
-  --diana-zcode-line-berry: #a95f7a;
-  --diana-zcode-line-gold: #b99a6a;
-  --diana-zcode-rail-normal: #643548;
-  --diana-zcode-rail-major: #754057;
-  --diana-zcode-rail-hover: #b96583;
-  --diana-zcode-rail-current: #e884a6;
+  --diana-zcode-surface: #120c11;
+  --diana-zcode-panel: #1c121a;
+  --diana-zcode-panel-strong: #261826;
+  --diana-zcode-sidebar: #1e131c;
+  --diana-zcode-ink: #f7eef5;
+  --diana-zcode-muted: #b4a2b1;
+  --diana-zcode-accent: #cc11a6;
+  --diana-zcode-accent-soft: #3d1031;
+  --diana-zcode-border: #3a2334;
+  --diana-zcode-line-coral: #e259b8;
+  --diana-zcode-line-berry: #c0139d;
+  --diana-zcode-line-gold: #f2a6dd;
+  --diana-zcode-rail-normal: #7a2059;
+  --diana-zcode-rail-major: #96296f;
+  --diana-zcode-rail-hover: #cc11a6;
+  --diana-zcode-rail-current: #f07ad3;
   --diana-zcode-character-image: var(--diana-zcode-image-character-dark);
   --diana-zcode-character-opacity: .66;
   --diana-zcode-character-filter: brightness(.98) saturate(.9) contrast(.99) drop-shadow(0 24px 46px rgb(0 0 0 / 26%));
@@ -23,7 +48,7 @@ html.diana-zcode-host.theme-zai-dark {
 
   --color-background: var(--diana-zcode-surface);
   --color-background-win-alt: var(--diana-zcode-panel-strong);
-  --color-background-alt: rgb(29 25 31 / 68%);
+  --color-background-alt: rgb(38 24 38 / 68%);
   --color-header: var(--diana-zcode-panel);
   --color-panel: var(--diana-zcode-panel);
   --color-sidebar: var(--diana-zcode-sidebar);
@@ -31,19 +56,19 @@ html.diana-zcode-host.theme-zai-dark {
   --color-popover: var(--diana-zcode-panel-strong);
   --color-popover-header: var(--diana-zcode-panel);
   --color-input: var(--diana-zcode-panel-strong);
-  --color-border: rgb(216 110 145 / 17%);
-  --color-border-hover: rgb(216 110 145 / 28%);
-  --color-hover: rgb(216 110 145 / 9%);
-  --color-selected: rgb(216 110 145 / 17%);
-  --color-surface: rgb(216 110 145 / 7%);
-  --color-surface-hover: rgb(216 110 145 / 14%);
+  --color-border: rgb(204 17 166 / 17%);
+  --color-border-hover: rgb(204 17 166 / 28%);
+  --color-hover: rgb(204 17 166 / 9%);
+  --color-selected: rgb(204 17 166 / 17%);
+  --color-surface: rgb(204 17 166 / 7%);
+  --color-surface-hover: rgb(204 17 166 / 14%);
   --color-accent: var(--diana-zcode-accent-soft);
   --color-brand: var(--diana-zcode-ink);
   --color-primary: var(--diana-zcode-ink);
   --color-primary-foreground: var(--diana-zcode-surface);
   --color-foreground: var(--diana-zcode-ink);
   --color-foreground-subtle: var(--diana-zcode-muted);
-  --color-foreground-subtlest: rgb(170 161 167 / 58%);
+  --color-foreground-subtlest: rgb(180 162 177 / 58%);
 
   /* ---- 应用自己的"浮层 / 面"级 token ----
    * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
@@ -64,32 +89,34 @@ html.diana-zcode-host.theme-zai-dark {
   --color-input-border-focused: var(--diana-zcode-accent);
 }
 
+/* 日间：同一族玫红，按在白底上的需要压暗。强调色 = 虹膜色相 312° 压到 L33% —— #a80086 对白底
+ * 7.0:1，直接拿虹膜色 #cc11a6 只有 5.0:1，做小字与导轨刻度偏弱；装饰填充的三档也整体压深一档。 */
 html.diana-zcode-host.theme-zai-light {
-  --diana-zcode-surface: #fbf8f6;
+  --diana-zcode-surface: #fdf6fb;
   --diana-zcode-panel: #ffffff;
-  --diana-zcode-panel-strong: #fff8fa;
-  --diana-zcode-sidebar: #f8f3f5;
-  --diana-zcode-ink: #2c2529;
-  --diana-zcode-muted: #7e7178;
-  --diana-zcode-accent: #b84970;
-  --diana-zcode-accent-soft: #f2dce3;
-  --diana-zcode-border: #e8dfe2;
-  --diana-zcode-line-coral: #cf7f88;
-  --diana-zcode-line-berry: #b85f7c;
-  --diana-zcode-line-gold: #c69a58;
-  --diana-zcode-rail-normal: rgb(184 73 112 / 55%);
-  --diana-zcode-rail-major: rgb(184 73 112 / 55%);
-  --diana-zcode-rail-hover: rgb(184 73 112 / 72%);
-  --diana-zcode-rail-current: rgb(174 55 96 / 92%);
+  --diana-zcode-panel-strong: #fff6fd;
+  --diana-zcode-sidebar: #fbf1f8;
+  --diana-zcode-ink: #2e2130;
+  --diana-zcode-muted: #7f6a7b;
+  --diana-zcode-accent: #a80086;
+  --diana-zcode-accent-soft: #f7d9f0;
+  --diana-zcode-border: #eedcea;
+  --diana-zcode-line-coral: #bf1499;
+  --diana-zcode-line-berry: #99087d;
+  --diana-zcode-line-gold: #c96ab4;
+  --diana-zcode-rail-normal: rgb(168 0 134 / 55%);
+  --diana-zcode-rail-major: rgb(168 0 134 / 55%);
+  --diana-zcode-rail-hover: rgb(168 0 134 / 72%);
+  --diana-zcode-rail-current: rgb(150 10 120 / 92%);
   --diana-zcode-character-image: var(--diana-zcode-image-character-light);
   --diana-zcode-character-opacity: .72;
-  --diana-zcode-character-filter: saturate(.96) brightness(1) drop-shadow(0 24px 42px rgb(69 42 51 / 15%));
+  --diana-zcode-character-filter: saturate(.96) brightness(1) drop-shadow(0 24px 42px rgb(70 25 60 / 15%));
   --diana-zcode-doodle-opacity: .48;
   --diana-zcode-upper-opacity: .28;
 
   --color-background: var(--diana-zcode-surface);
-  --color-background-win-alt: #f2ecef;
-  --color-background-alt: rgb(251 248 246 / 72%);
+  --color-background-win-alt: #f7ecf5;
+  --color-background-alt: rgb(253 246 251 / 72%);
   --color-header: var(--diana-zcode-panel);
   --color-panel: var(--diana-zcode-panel);
   --color-sidebar: var(--diana-zcode-sidebar);
@@ -97,19 +124,19 @@ html.diana-zcode-host.theme-zai-light {
   --color-popover: var(--diana-zcode-panel);
   --color-popover-header: var(--diana-zcode-panel-strong);
   --color-input: var(--diana-zcode-panel);
-  --color-border: rgb(184 73 112 / 16%);
-  --color-border-hover: rgb(184 73 112 / 27%);
-  --color-hover: rgb(184 73 112 / 7%);
-  --color-selected: rgb(184 73 112 / 13%);
-  --color-surface: rgb(184 73 112 / 5%);
-  --color-surface-hover: rgb(184 73 112 / 10%);
+  --color-border: rgb(168 0 134 / 16%);
+  --color-border-hover: rgb(168 0 134 / 27%);
+  --color-hover: rgb(168 0 134 / 7%);
+  --color-selected: rgb(168 0 134 / 13%);
+  --color-surface: rgb(168 0 134 / 5%);
+  --color-surface-hover: rgb(168 0 134 / 10%);
   --color-accent: var(--diana-zcode-accent-soft);
   --color-brand: var(--diana-zcode-ink);
   --color-primary: var(--diana-zcode-ink);
   --color-primary-foreground: var(--diana-zcode-panel);
   --color-foreground: var(--diana-zcode-ink);
   --color-foreground-subtle: var(--diana-zcode-muted);
-  --color-foreground-subtlest: rgb(116 104 111 / 56%);
+  --color-foreground-subtlest: rgb(127 106 123 / 56%);
 
   /* ---- 应用自己的"浮层 / 面"级 token ----
    * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
@@ -400,44 +427,68 @@ html.diana-zcode-host .diana-zcode-acao-cheer {
   transform: rotate(4deg);
 }
 
-/* 同样要赢过契约表：契约给涂鸦画的是"主题色 + 形状蒙版"，暗夜这版要的是**直接铺素材本身**
-   （素材自带暖桃粉线色，见 assets/diana-doodle-v2.png），两者是不同的画法，必须由主题压住。 */
+/* 暗夜的装饰 = 与日间**同一套画法**（形状取自素材的 alpha 蒙版、颜色取自 token），只是取暗色档的
+ * token、并保留一点外发光。
+ * 这里原本走的是 diana 那套"直接铺素材本身 + brightness/saturate 压暗"——素材自带的是暖桃粉线色
+ * （见 assets/doodle.png 的来源 素材/diana-doodle-v2.png），与本主题"整族玫红"的配色不同族，
+ * 所以换成眼睛配色后两种极性统一成蒙版画法。角线 / 上缘线本来就是"主题色 + 蒙版"，无需改动。 */
 html.diana-zcode-host.theme-zai-dark #diana-zcode-chrome > .diana-zcode-doodle {
-  background: var(--diana-zcode-image-doodle) center / contain no-repeat;
-  filter: brightness(.72) saturate(.78) contrast(.92);
+  background: var(--diana-zcode-line-berry);
+  -webkit-mask: var(--diana-zcode-image-doodle) center / contain no-repeat;
+  mask: var(--diana-zcode-image-doodle) center / contain no-repeat;
+  filter: drop-shadow(0 0 9px rgb(204 17 166 / 12%));
 }
 
 html.diana-zcode-host.theme-zai-dark .diana-zcode-star {
-  background: var(--diana-zcode-image-star) center / contain no-repeat;
+  background: var(--diana-zcode-line-gold);
+  -webkit-mask: var(--diana-zcode-image-star) center / contain no-repeat;
+  mask: var(--diana-zcode-image-star) center / contain no-repeat;
   opacity: .7;
-  filter: brightness(.78) saturate(.82) contrast(.96) drop-shadow(0 0 7px rgb(216 110 145 / 6%));
+  filter: drop-shadow(0 0 7px rgb(204 17 166 / 10%));
 }
 
 html.diana-zcode-host.theme-zai-dark .diana-zcode-candy {
+  background: var(--diana-zcode-line-coral);
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
   opacity: .78;
-  filter: brightness(.84) saturate(.88) contrast(.98) drop-shadow(0 0 7px rgb(216 110 145 / 7%));
+  filter: drop-shadow(0 0 7px rgb(204 17 166 / 10%));
 }
 
 html.diana-zcode-host.theme-zai-dark .diana-zcode-candy-wrapped {
-  background: var(--diana-zcode-image-candy-wrapped) center / contain no-repeat;
+  -webkit-mask-image: var(--diana-zcode-image-candy-wrapped);
+  mask-image: var(--diana-zcode-image-candy-wrapped);
 }
 
 html.diana-zcode-host.theme-zai-dark .diana-zcode-candy-lollipop {
-  background: var(--diana-zcode-image-candy-lollipop) center / contain no-repeat;
-  filter: brightness(.72) saturate(.88) contrast(.98) drop-shadow(0 0 7px rgb(216 110 145 / 6%));
+  -webkit-mask-image: var(--diana-zcode-image-candy-lollipop);
+  mask-image: var(--diana-zcode-image-candy-lollipop);
 }
 
 html.diana-zcode-host.theme-zai-dark .diana-zcode-acao {
-  opacity: .58;
-  filter: brightness(.7) saturate(.76) contrast(.96) drop-shadow(0 0 7px rgb(216 110 145 / 5%));
+  background: var(--diana-zcode-line-berry);
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  opacity: .6;
+  filter: drop-shadow(0 0 7px rgb(204 17 166 / 8%));
 }
 
 html.diana-zcode-host.theme-zai-dark .diana-zcode-acao-heart {
-  background: var(--diana-zcode-image-acao-heart) center / contain no-repeat;
+  -webkit-mask-image: var(--diana-zcode-image-acao-heart);
+  mask-image: var(--diana-zcode-image-acao-heart);
 }
 
 html.diana-zcode-host.theme-zai-dark .diana-zcode-acao-cheer {
-  background: var(--diana-zcode-image-acao-cheer) center / contain no-repeat;
+  -webkit-mask-image: var(--diana-zcode-image-acao-cheer);
+  mask-image: var(--diana-zcode-image-acao-cheer);
 }
 
 html.diana-zcode-host.theme-zai-light .diana-zcode-corner-line,

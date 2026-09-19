@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as net from 'net';
 import * as os from 'os';
 import * as path from 'path';
-import { fetchTargets, pickRendererTarget } from './cdp';
+import { CdpSession, fetchTargets, pickRendererTarget } from './cdp';
 
 export interface TargetAppSpec {
   appId: string;
@@ -243,6 +243,43 @@ export async function probeCdpVersion(port: number, timeoutMs = 1500): Promise<b
     if (previous.https !== undefined) process.env.HTTPS_PROXY = previous.https;
     if (previous.all !== undefined) process.env.ALL_PROXY = previous.all;
   }
+}
+
+/** 页面端就绪探针：输入框（textarea / contenteditable）出现并有了可见尺寸，且文档加载完。
+ *  皮肤、用量条、桌宠全都挂在这套 DOM 上，太早注入会"复核不过"，用户就得点第二次。 */
+const RENDERER_READY_EXPR = '(() => {' +
+  'var ta = document.querySelector("textarea, [contenteditable=\\"true\\"]");' +
+  'var r = ta ? ta.getBoundingClientRect() : null;' +
+  'return { ready: document.readyState, composer: !!ta, w: r ? Math.round(r.width) : 0, h: r ? Math.round(r.height) : 0 };' +
+  '})()';
+
+/** 等渲染页可注入（CDP 起来之后渲染页还要加载、前端还要挂载） */
+export async function waitForRenderer(spec: TargetAppSpec, timeoutMs = 30_000, onStep?: StepReporter): Promise<boolean> {
+  const start = Date.now();
+  let last = '';
+  while (Date.now() - start < timeoutMs) {
+    const port = spec.debugPort;
+    const found = pickRendererTarget(await fetchTargets(port, 1200), spec.targetUrlHint);
+    if (found?.webSocketDebuggerUrl) {
+      const session = new CdpSession(found.webSocketDebuggerUrl);
+      try {
+        await session.open(6000);
+        const info = await session.evaluate(RENDERER_READY_EXPR, 6000) as { ready?: string; composer?: boolean; w?: number; h?: number };
+        if (info?.ready === 'complete' && info.composer && (info.w ?? 0) > 40 && (info.h ?? 0) > 8) {
+          onStep?.(`渲染页就绪（${((Date.now() - start) / 1000).toFixed(1)}s）`, '渲染页已就绪');
+          return true;
+        }
+        last = `${info?.ready ?? '?'}${info?.composer ? '' : ' · 输入框未挂载'}`;
+      } catch { /* 页面还在加载，下一次再试 */ } finally {
+        session.close();
+      }
+    } else {
+      last = '渲染页还未出现';
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  onStep?.(`等待渲染页超时（${(timeoutMs / 1000).toFixed(0)}s，${last}）`);
+  return false;
 }
 
 export async function isProcessRunning(processName: string): Promise<boolean> {

@@ -12,13 +12,19 @@
 
 ### ① 主题注入（皮肤）
 
-- **多主题**：`themes/<id>/` 一个目录一套皮肤。当前有 `cosmic-line`（深空线稿）与 `diana`。
-  一套皮肤包含：清单 `theme.json`、样式层 `skin/theme.css`、页面运行时 `skin/runtime-template.js`、美术素材 `assets/`。
+- **多主题**：`themes/<id>/` 一个目录一套皮肤。当前有 `butterfly-line`（蝶影线稿 · 粉发立绘：立绘原图直出 +
+  Diana 的装饰套，**整族配色取自立绘眼睛的玫红**，见 `tools/eye-color.js`）、`cosmic-line`（深空线稿）与 `diana`。
+  一套皮肤包含：清单 `theme.json`、样式层 `skin/theme.css`、美术素材 `assets/`。
+  页面端运行时**全项目一份**（`runtime/runtime-template.js`，引擎级：挂美术层、几何定位、导轨适配），
+  主题清单里不写 `skin.runtime` 就用它，需要自带一份时才在清单里覆盖。
 - **明暗三种模式**：`auto`（跟随应用自身极性，撤下时恢复原值）/ `dark` / `light`（由皮肤强制切换极性）。
   两套极性各有独立的 token 与美术。
 - **热切换**：注入作用于运行中的实例，切换皮肤不需要重启 ZCode。
 - **美术层**：工作区内挂 11 个节点（角线 / 上缘线 / 涂鸦主图 / 立绘 / 星星 ×2 / 糖果 ×2 / 小动物 ×2），
   按工作区矩形固定、`pointer-events:none` 不接管命中；组件级钩子覆盖侧栏、任务项、tabs、workspace 项与消息导轨。
+- **右侧面板展开时工作区会整体收窄**（实测 2253 → 1278，占窗宽 57%），美术层随之重挂并缩进收窄后的
+  会话栏里（立绘落在面板左侧、仍在文字下方），不是消失 —— 工作区判据的宽度门槛因此从 `innerWidth*.58`
+  放宽到 `.3` 并叠加可见性判断，见 `runtime/runtime-template.js` 的 `qualifies()`。
 
 ### ② 注入后复核（不是"没报错就算成功"）
 
@@ -152,14 +158,24 @@ src/                        引擎与应用层
   usage-bar.ts              用量条的页面端脚本
   pet.ts                    桌宠注册表与页面端运行时
   types.ts                  共享类型
+runtime/
+  runtime-template.js       页面端运行时（全项目一份的引擎文件：挂美术层 / 几何定位 / 导轨适配；
+                            主题清单里的 skin.runtime 是可选覆盖）
 themes/                     主题（每目录一套皮肤）
-  diana/                    清单 + skin/{theme.css, runtime-template.js} + assets/（10 美术 + 2 壁纸）
+  diana/                    清单 + skin/{theme.css, zcode-tokens.css, zcode-artwork-contract.css} + assets/（10 美术 + 2 壁纸）
   cosmic-line/              同上；素材为纯 alpha 蒙版，两种极性都用 mask + 主题色
+  butterfly-line/           实现基准为 diana（skin/ 三份样式表照搬）；素材由 tools/build-theme-butterfly.js
+                            从 素材/ 生成：立绘原图直出（612×1440，523KB）+ Diana 那 8 张装饰（按 maxW 缩放）
 assets/                     运行时资源
   icon.png                  应用图标（窗口 / 托盘，打包时转 .ico 作安装器图标）
   pet/<id>/                 6 只桌宠 × 11 个状态 GIF + pet.json
 tools/                      素材工具链（零依赖）
   png.js                    PNG 编解码
+  build-theme-butterfly.js  从 素材/ 生成 butterfly-line 的素材集（立绘经 ffmpeg 原图直出，装饰按 maxW 缩放）
+  eye-color.js              从立绘里量"眼睛的颜色"（默认只取蓝>绿的品红家族像素，排除皮肤/头发），
+                            输出配色锚点（强调色 / 日间压暗值 / 族中心色相）—— butterfly-line 的配色即由它得出
+  zcode-css.js              读 ZCode 打包在 app.asar 里的渲染层 CSS：列出应用定义的 --color-* token、
+                            查某个 token 谁在用、并与某个主题的覆盖面对差集（做新皮肤时查漏项）
   line-art.js               矢量→RGBA 栅格化（距离场抗锯齿 + 样条 + 手绘扰动）
   key-lineart.js            线稿抠底（按与背景色的距离取 alpha，保住闭合轮廓内部）
   extract-art.js            渲染图抠底（边缘连通 + 厚度检测）与主色聚类
@@ -171,7 +187,8 @@ tools/                      素材工具链（零依赖）
   samples.js                渲染器样张
   prompts/                  图生图提示词（角色线稿 / 装饰涂鸦，中英双版）
 .verify/                    验证脚本与夹具（实机归因、A/B、像素取证、夹具回归）
-素材/ · 线稿/                原始参考图（不参与构建，用于重新加工主题素材）
+素材/ · 线稿/                原始素材（不进 git）。素材/ 是 butterfly-line 的素材源（立绘 2.png + Diana 那 8 张
+                            装饰），线稿/ 那 8 张 AI 生成立绘留给尚未启用的线稿流水线（tools 里的 PLAN 槽位）
 README.md · package.json · tsconfig.json
 ```
 

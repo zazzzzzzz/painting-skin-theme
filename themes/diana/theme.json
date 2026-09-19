@@ -15,7 +15,6 @@
 
   "skin": {
     "css": "skin/theme.css",
-    "runtime": "skin/runtime-template.js",
     "tokens": "skin/zcode-tokens.css",
     "artworkContract": "skin/zcode-artwork-contract.css"
   },
@@ -41,6 +40,7 @@
   "modes": ["auto", "dark", "light"],
 
   "notes": [
+    "**页面端运行时不在本目录**：运行时是全项目一份的引擎文件（runtime/runtime-template.js），主题清单里不写 `skin.runtime` 就用它；要自带一份覆盖时写 `skin.runtime` 指到主题目录内的文件。",
     "modes.auto = 不改 ZCode 的 theme-zai-* 类，皮肤按应用自身的明暗走（run​time-template.js 会记住原值并在 disable 时恢复）。",
     "dark / light = 由皮肤强制把 <html> 切到对应极性，日夜两套 token 与两套美术同时在 theme.css 里。",
     "hero-*.png 不是 Diana 原版素材（原版没有壁纸，纯色 surface + 美术）。这里生成它们只为在本注入器里给工作区一个可用的底图，见 README「与 Diana 原版的差异」。"

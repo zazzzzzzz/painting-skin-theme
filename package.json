@@ -1,6 +1,6 @@
 {
   "name": "painting-skin-theme",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "ZCode 皮肤注入器：皮肤样式层取自 Diana Multi-App Launcher，注入机制取自 Dream-Work-Theme。",
   "main": "dist/main.js",
@@ -27,6 +27,7 @@
     "files": [
       "dist/**/*",
       "src/panel.html",
+      "runtime/**/*",
       "themes/**/*",
       "assets/**/*",
       "package.json",

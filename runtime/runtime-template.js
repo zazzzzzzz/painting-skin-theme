@@ -1,3 +1,21 @@
+/* 页面端运行时（引擎级，**全项目一份**）。
+ *
+ * 注入器读它、把里面唯一的那个 payload 占位符（就在下面那行 atob(...) 里）换成 payload
+ * —— adapterVersion / requestedTheme / css / assets —— 再整段作为**一个表达式**经 CDP
+ * Runtime.evaluate 送进目标页面执行。它负责：按宿主极性补齐 theme-zai-*、注入样式表与素材变量、
+ * 几何定位工作区与前景、挂美术层的 11 个节点、适配消息导轨，并暴露
+ * __DIANA_ZCODE_THEME__.disable() 供撤下时完整回退。
+ *
+ * 注意：**本文件里那个占位符字面量只能出现一次**（就是被替换的那处）。别在注释里原样写它 ——
+ * 注入器是"替换一处"，写在注释里会把替换吃掉、真正的 atob 参数留着占位符，注入必然抛错。
+ *
+ * 它与主题无关（命名空间、id、类名都是与素材角色的硬约定；颜色与素材分别由主题 CSS、清单里的 assets 决定），
+ * 所以放在这里，而不是每个 themes/<id>/skin/ 各存一份 —— 此前三份逐字相同的副本，改一次引擎要同步三处。
+ * 主题若确实需要自己的运行时，在 theme.json 里写 `skin.runtime: "skin/xxx.js"` 覆盖本文件即可
+ * （仍按主题目录做越界校验，见 src/theme-store.ts）。
+ *
+ * 文中几处「本项目对 Diana 原版的偏离」注释记录了踩过的坑（导轨数量门槛、工作区判据的宽度门槛与可见性、
+ * 排除美术层自身），改这里之前请连同 .verify/ 下对应的复现脚本一起读。 */
 (() => {
   const bytes = Uint8Array.from(atob("__DIANA_PAYLOAD_BASE64__"), (character) => character.charCodeAt(0));
   const payload = JSON.parse(new TextDecoder().decode(bytes));
@@ -94,13 +112,28 @@ html.diana-zcode-host {
     return list;
   }
 
+  /* 本项目对 Diana 原版的第三处偏离：判据必须叠加**可见性**，只看 rect 会认下"隐藏但仍占满窗"的容器。
+   *
+   * 设置页这类整页路由**不卸载会话 DOM**（保活），应用是用一个 `div.h-full.opacity-0` 路由过渡层把它
+   * 压到不可见的 —— rect、display、visibility 全都照旧正常，只有 opacity 为 0。
+   * 于是"设置页里点开界面语言下拉框"时（Radix 开合会改 DOM，触发我们重挂）：
+   *   输入框那条路径取到的仍是保活会话里的 textarea → 它的祖先（隐藏的会话容器）矩形满窗 → 判据通过
+   *   → 美术层被重挂进那个不可见的容器 → 立绘与涂鸦整层消失（chrome 还在文档里、checkVisibility=false）。
+   * 实测见 .verify/settings-select2.js（②可见 → ③重挂进隐藏容器 → ④关掉下拉框又挂回来）。
+   * 宠物那边早就用了同一道判断（保活输入框那个坑），这里补上；三个选项一起用才算得准：
+   * opacityProperty 抓的就是这个 opacity:0 的过渡层，contentVisibilityAuto 抓 content-visibility 保活。 */
   function qualifies(element) {
+    if (element.closest && element.closest("#" + chromeId)) return false;
+    try {
+      if (typeof element.checkVisibility === "function"
+        && !element.checkVisibility({ visibilityProperty: true, opacityProperty: true, contentVisibilityAuto: true })) return false;
+    } catch (error) { /* 老引擎没有这个方法：退回只看 rect，与改动前一致 */ }
     const rect = element.getBoundingClientRect();
     return rect.left >= 180
       && rect.left <= Math.min(380, innerWidth * .36)
       && rect.top >= 30
       && rect.top <= 90
-      && rect.width >= innerWidth * .58
+      && rect.width >= innerWidth * .3
       && rect.height >= innerHeight * .68;
   }
 

@@ -2,8 +2,11 @@
  *
  * 皮肤样式层：原样取自 Diana Multi-App Launcher 的 theme-packs/zcode
  *   - skin/theme.css                 日夜双套 token + 组件钩子 + 美术覆盖层 + 消息导轨
- *   - skin/runtime-template.js       页面端运行时（几何定位工作区/前景/导轨，挂 11 节点美术层）
  *   - assets/*.png                   10 张形状蒙版/立绘
+ *
+ * 页面端运行时（挂 11 节点美术层、几何定位工作区/前景/导轨）**全项目一份**，在 runtime/runtime-template.js：
+ * 它和主题无关（命名空间与 id 是与素材角色的硬约定，颜色/素材由主题决定），主题清单里的 `skin.runtime`
+ * 只是可选的覆盖。以前每个主题各存一份逐字相同的副本，改一次引擎要同步三处。
  *
  * 注入机制：取自 Dream-Work-Theme
  *   - 挂到运行中的实例（不接管启动、不改安装目录、不开新端口）
@@ -58,18 +61,48 @@ export function buildPayloadExpression(skin: SkinEntry, mode: SkinMode): string 
   for (const [role, file] of Object.entries(manifest.assets)) {
     assets[role] = readAssetDataUrl(dir, file);
   }
+  /* 样式层按原生实现的三段式拼装：契约（美术层几何与事件穿透）→ token 映射 → 主题样式。
+   * 原生实现是三个文件分别注入（zcode-artwork-contract.css / zcode-tokens.css / theme.css），
+   * 这里合并成一份 css 字符串传给运行时，效果等价。 */
+  const sheets: string[] = [];
+  if (manifest.skin.artworkContract) sheets.push(readText(dir, manifest.skin.artworkContract));
+  if (manifest.skin.tokens) sheets.push(readText(dir, manifest.skin.tokens));
+  sheets.push(readText(dir, manifest.skin.css));
   const payload = {
     adapterVersion: manifest.adapterVersion,
     requestedTheme: mode,
-    css: readText(dir, manifest.skin.css),
+    css: sheets.join('\n\n'),
     assets,
   };
-  const template = readText(dir, manifest.skin.runtime);
+  const template = readRuntimeTemplate(skin);
   const placeholder = '__DIANA_PAYLOAD_BASE64__';
-  if (!template.includes(placeholder)) {
-    throw new Error(`运行时模板缺少占位符 ${placeholder}`);
+  /* 占位符必须**恰好一处**：String.replace 只换第一处，而模板里若在别处（例如注释）也原样写了它，
+     替换就会打在注释上、真正的 atob 参数留着占位符 —— 投进去必然抛错，且报错点在页面里、很难归因。
+     实测踩过一次（给运行时加文件头注释时顺手把占位符写进了注释）。 */
+  const occurrences = template.split(placeholder).length - 1;
+  if (occurrences !== 1) {
+    throw new Error(`运行时模板里的占位符应恰好出现 1 次，实际 ${occurrences} 次：${readRuntimeTemplatePath(skin)}`);
   }
   return template.replace(placeholder, Buffer.from(JSON.stringify(payload), 'utf-8').toString('base64'));
+}
+
+/** 页面端运行时读哪儿：主题清单写了 `skin.runtime` 就读主题目录里那份（覆盖，仍走越界校验），
+ *  否则读引擎级共享的那一份（runtime/runtime-template.js）。做成一份的理由：它与主题无关，而三份
+ *  逐字相同的副本意味着改一次引擎要同步三处 —— 而 .verify 下的复现脚本与偏离注释只针对同一个实现。 */
+function readRuntimeTemplate(skin: SkinEntry): string {
+  const relative = skin.manifest.skin.runtime;
+  // 共享文件不走 resolveInside：它是引擎自己的文件，不是主题清单里的路径（主题只受主题目录约束）
+  return relative ? readText(skin.dir, relative) : fs.readFileSync(sharedRuntimePath(), 'utf-8');
+}
+
+/** 出错时报出用的是哪一份（共享的还是主题自带的），省得猜 */
+function readRuntimeTemplatePath(skin: SkinEntry): string {
+  const relative = skin.manifest.skin.runtime;
+  return relative ? path.join(skin.dir, relative) : sharedRuntimePath();
+}
+
+export function sharedRuntimePath(): string {
+  return path.resolve(__dirname, '..', 'runtime', 'runtime-template.js');
 }
 
 /** 复核表达式：与 Diana 的 verify 同口径，额外回报够我们诊断的细节。

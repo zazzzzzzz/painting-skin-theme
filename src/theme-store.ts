@@ -23,7 +23,8 @@ export interface SkinManifest {
   };
   skin: {
     css: string;
-    runtime: string;
+    /** 页面端运行时的**可选覆盖**：不写就用共享的那份（runtime/runtime-template.js） */
+    runtime?: string;
     tokens?: string;
     artworkContract?: string;
   };
@@ -84,7 +85,9 @@ function validate(manifest: SkinManifest): void {
     }
   }
   requireRelative(manifest.skin?.css, 'skin.css');
-  requireRelative(manifest.skin?.runtime, 'skin.runtime');
+  /* runtime 是**可选的覆盖**：不写就用引擎级的共享运行时（runtime/runtime-template.js），
+     写了才从主题目录里读 —— 全项目一份，避免同一份运行时在每个主题下各存一份副本。 */
+  if (manifest.skin?.runtime !== undefined) requireRelative(manifest.skin.runtime, 'skin.runtime');
   if (!manifest.assets || Object.keys(manifest.assets).length === 0) throw new Error('assets 不能为空');
   for (const [role, file] of Object.entries(manifest.assets)) {
     if (!ROLE_PATTERN.test(role)) throw new Error(`素材角色名不合法：${role}`);

@@ -15,8 +15,7 @@
   },
 
   "skin": {
-    "css": "skin/theme.css",
-    "runtime": "skin/runtime-template.js"
+    "css": "skin/theme.css"
   },
 
   "assets": {
@@ -35,6 +34,7 @@
   "modes": ["auto", "dark", "light"],
 
   "notes": [
+    "**页面端运行时不在本目录**：运行时是全项目一份的引擎文件（runtime/runtime-template.js），主题清单里不写 `skin.runtime` 就用它；要自带一份覆盖时写 `skin.runtime` 指到主题目录内的文件。",
     "本主题所有素材都是**纯 alpha 蒙版**：RGB 被统一成白色，alpha 量化成 16 级。因此 CSS 在两种极性下都用 mask + 主题色/渐变填充，线色完全由 token 控制 —— 这正是'色系保持一致'的做法（线稿本身是中性深灰，直接用会在深色底上消失）。",
     "**立绘是两层**：characterDark = 线条，characterLight = 剪影填充。线稿只有线条带 alpha、轮廓内部透明，直接铺在深色底上就是一团等亮度的白线网（实测观感确实如此）；剪影由 tools/make-silhouette.js 从线稿反算（线条膨胀→外部洪水填充→取内部→腐蚀回退），提供体块，线条叠在上面提供细节。",
     "素材来自 8 张 AI 生成线稿（白底），处理链：key-lineart.js 抠底 → remove-watermark.js 去'豆包AI生成'水印 → 降采样 → RGB 统一成白 + alpha 量化 16 级。合计 276KB。",

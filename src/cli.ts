@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { applySkin, buildPayloadExpression, detectInjectedSkin, getStatus, listPets, listSkins, readPetSelection, removeSkin, selectPet, themesRoot } from './injector';
-import { candidatesFor, clearTargetExe, configPath, defaultPaths, describeTargetApp, relaunchWithDebugPort, saveTargetExe, targetSpecOf } from './target-app';
+import { candidatesFor, clearTargetExe, configPath, defaultPaths, describeTargetApp, relaunchWithDebugPort, saveTargetExe, targetSpecOf, waitForRenderer } from './target-app';
 import { startUsagePump, usagePumpStatus } from './usage-pump';
 import type { SkinEntry } from './theme-store';
 import type { SkinMode } from './types';
@@ -126,9 +126,21 @@ async function main(): Promise<void> {
       : undefined);
     let applied = null;
     if (relaunched.ok && process.argv.includes('--apply') && appEntry) {
-      if (verbose) process.stderr.write('PROGRESS 正在注入皮肤…\n');
-      applied = await applySkin(appEntry, mode);
-      if (verbose) process.stderr.write(`PROGRESS ${applied.ok ? '注入完成' : '注入未通过'}\n`);
+      const progress = (label: string) => { if (verbose) process.stderr.write(`PROGRESS ${label}\n`); };
+      /* 注入前先等渲染页可用：CDP 通 ≠ 能注入（页面还要加载、前端还要挂载），
+         太早注入复核必然不过，用户就得点第二次 —— 这是"重启并注入要一次成功"的关键一步。 */
+      const readyPort = relaunched.port ?? spec.debugPort;
+      const ready = await waitForRenderer({ ...spec, debugPort: readyPort }, 30_000, (_step, label) => progress(label || '等渲染页…'));
+      if (!ready) progress('渲染页未就绪，仍尝试注入');
+      /* 仍留重试：第一次注入可能正好撞在应用挂载的最后一段上 */
+      const delays = [0, 1500, 2500, 4000];
+      for (let attempt = 0; attempt < delays.length; attempt++) {
+        if (delays[attempt]) await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+        progress(attempt === 0 ? '正在注入皮肤…' : `正在重试注入（第 ${attempt + 1} 次）…`);
+        applied = await applySkin(appEntry, mode);
+        if (applied.ok) break;
+      }
+      progress(applied && applied.ok ? '注入完成' : '注入未通过');
     }
     const payload: Record<string, unknown> = { relaunched, applied, app: await describeTargetApp(spec) };
     if (process.argv.includes('--panel-state')) payload.panel = await panelStateOf(skins);

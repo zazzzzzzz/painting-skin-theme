@@ -57,6 +57,24 @@ html.diana-zcode-host.theme-zai-dark {
   --color-foreground: var(--diana-zcode-ink);
   --color-foreground-subtle: var(--diana-zcode-muted);
   --color-foreground-subtlest: rgb(143 163 184 / 58%);
+
+  /* ---- 应用自己的"浮层 / 面"级 token ----
+   * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
+   * .theme-zai-dark/light 里；主题不覆盖它们，弹窗就会继续用应用的中性灰（`.bg-menu` →
+   * var(--color-menu) = #2b2b2b）。实测：设置页"界面语言"下拉框背景 = rgb(43,43,43)（见
+   * .verify/popover-tokens.js）。这里只引用主题自身的 token，所以三套皮肤用的是同一段映射。 */
+  --color-menu: var(--diana-zcode-panel-strong);
+  --color-menu-hover: color-mix(in srgb, var(--diana-zcode-accent) 14%, transparent);
+  --color-secondary: var(--diana-zcode-panel-strong);
+  --color-popover-foreground: var(--diana-zcode-ink);
+  --color-popover-border: var(--diana-zcode-border);
+  --color-tooltip: var(--diana-zcode-panel-strong);
+  --color-tooltip-foreground: var(--diana-zcode-ink);
+  --color-tooltip-tag: color-mix(in srgb, var(--diana-zcode-accent) 16%, transparent);
+  --color-tooltip-tag-foreground: var(--diana-zcode-ink);
+  --color-toast: var(--diana-zcode-panel-strong);
+  --color-card-selected: var(--color-selected);
+  --color-input-border-focused: var(--diana-zcode-accent);
 }
 
 html.diana-zcode-host.theme-zai-light {
@@ -107,6 +125,24 @@ html.diana-zcode-host.theme-zai-light {
   --color-foreground: var(--diana-zcode-ink);
   --color-foreground-subtle: var(--diana-zcode-muted);
   --color-foreground-subtlest: rgb(90 107 125 / 56%);
+
+  /* ---- 应用自己的"浮层 / 面"级 token ----
+   * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
+   * .theme-zai-dark/light 里；主题不覆盖它们，弹窗就会继续用应用的中性灰（`.bg-menu` →
+   * var(--color-menu) = #2b2b2b）。实测：设置页"界面语言"下拉框背景 = rgb(43,43,43)（见
+   * .verify/popover-tokens.js）。这里只引用主题自身的 token，所以三套皮肤用的是同一段映射。 */
+  --color-menu: var(--diana-zcode-panel-strong);
+  --color-menu-hover: color-mix(in srgb, var(--diana-zcode-accent) 14%, transparent);
+  --color-secondary: var(--diana-zcode-panel-strong);
+  --color-popover-foreground: var(--diana-zcode-ink);
+  --color-popover-border: var(--diana-zcode-border);
+  --color-tooltip: var(--diana-zcode-panel-strong);
+  --color-tooltip-foreground: var(--diana-zcode-ink);
+  --color-tooltip-tag: color-mix(in srgb, var(--diana-zcode-accent) 16%, transparent);
+  --color-tooltip-tag-foreground: var(--diana-zcode-ink);
+  --color-toast: var(--diana-zcode-panel-strong);
+  --color-card-selected: var(--color-selected);
+  --color-input-border-focused: var(--diana-zcode-accent);
 }
 
 html.diana-zcode-host body {

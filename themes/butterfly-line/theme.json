@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "id": "butterfly-line",
+  "name": "蝶影线稿 · 粉发立绘",
+  "author": "立绘与装饰：素材/ · 实现基准：themes/diana · 主题：painting-skin-theme",
+
+  "adapterVersion": "painting-skin-butterfly-line-v1",
+
+  "app": {
+    "id": "zcode",
+    "processName": "ZCode.exe",
+    "debugPort": 9344,
+    "targetUrlHint": "renderer/index.html",
+    "rendererHostClass": "diana-zcode-host"
+  },
+
+  "skin": {
+    "css": "skin/theme.css",
+    "tokens": "skin/zcode-tokens.css",
+    "artworkContract": "skin/zcode-artwork-contract.css"
+  },
+
+  "assets": {
+    "characterDark": "assets/character.png",
+    "characterLight": "assets/character.png",
+    "doodle": "assets/doodle.png",
+    "upper": "assets/upper.png",
+    "corner": "assets/corner.png",
+    "star": "assets/star.png",
+    "candyWrapped": "assets/candy-wrapped.png",
+    "candyLollipop": "assets/candy-lollipop.png",
+    "acaoHeart": "assets/acao-heart.png",
+    "acaoCheer": "assets/acao-cheer.png"
+  },
+
+  "modes": ["auto", "dark", "light"],
+
+  "notes": [
+    "**页面端运行时不在本目录**：运行时是全项目一份的引擎文件（runtime/runtime-template.js），主题清单里不写 `skin.runtime` 就用它；要自带一份覆盖时写 `skin.runtime` 指到主题目录内的文件。",
+    "**实现基准是 themes/diana/**：skin/ 下的四份文件（theme.css / runtime-template.js / zcode-tokens.css / zcode-artwork-contract.css）都由 diana 那份照搬，只有素材换了。差异全部落在 assets/ 与 theme.json 的清单上 —— 这样两套皮肤的行为（明暗三态、美术层几何、导轨、复核口径）完全一致，出问题可以直接对拉。",
+    "**立绘原图直出**：assets/character.png 来自 `素材/2.png`（850×2000 带透明底的全彩插画），只按目标高度 1440 缩放（= 显示盒 height min(78vh,720px) 的 2 倍），不抠底、不拍平颜色。尺寸上限的理由：运行时把素材内联成 data URI，**单条 CSS 声明过长会静默失效**（实测 1.86MB 立绘 → base64 2.5MB 时那条变量算成空字符串，元素完全不绘制且不报错），复核项 artworkResolved 就是为这个坑加的。",
+    "**characterDark 与 characterLight 指向同一张图**：本主题只有一张立绘（diana 有日夜两张）。两套极性靠 CSS 滤镜区分 —— 暗夜 brightness(.98) saturate(.9)、日间 saturate(.96) brightness(1)，都接近中性，所以同一张图在两种底色上都成立。代价是 payload 里这份 image 会出现两次（两个角色名各一条 data URI），实测总量仍在安全区间内。",
+    "**装饰全部来自 `素材/`**（那 8 张就是 Diana 的素材，与 themes/diana/assets/ 里的字节完全相同）：涂鸦 doodle.png（820×803，629KB）、星星、糖果 ×2、小动物 ×2、角线、上缘线，按各自 maxW 缩放。**涂鸦就是 diana-doodle-v2**，所以立绘与涂鸦的观感是「新角色 + Diana 的装饰语言」。",
+    "**配色基准 = 立绘眼睛的玫红**（不是沿用 diana 的粉莓）。实测方法见 tools/eye-color.js：把立绘头部裁出来、在双眼框内取「蓝>绿」的品红家族像素（皮肤是 R>G>B，用它排除），最饱和的 15% 均值 = **#cc11a6**（色相 312°、饱和 .92）、最暗 25% #a41e7b、最亮 10% #c4618b —— 即色相 312~335° 的玫红区间。族中心取 318°，明度阶梯沿用 diana 那一套（只换色相，中性角色几乎不变），强调色直接用实测的虹膜核心 #cc11a6，装饰填充取同族三档 line-berry / line-coral / line-gold。对比度实测：暗夜 ink/surface 17.0、muted/surface 8.1；日间 ink/surface 14.4、muted/surface 4.65、accent/surface 6.6 —— 日间强调色是同色相压到 L33% 的 #a80086（>7:1，小字与导轨刻度够用；直接用虹膜色只有 5.0:1）。",
+    "**两种极性对装饰的画法现在一致**：形状取自素材的 alpha 蒙版、颜色取自 token（暗夜取暗色档并加一点外发光）。diana 原版的暗夜是「直接铺素材本身 + brightness/saturate 压暗」——素材自带暖桃粉线色，与本主题整族玫红的配色不同族，所以换配色后统一成蒙版画法。立绘不走蒙版（全彩插画取 alpha 只会剩外轮廓），两种极性都直接铺素材本身。",
+    "**命名空间仍是 `diana-`**（`--diana-zcode-*` / `diana-zcode-host` / `#diana-zcode-chrome` / `__DIANA_ZCODE_THEME__`）：这是页面端运行时与素材角色的硬约定，运行时按清单的 assets 角色名生成 `--diana-zcode-image-<role>` 再喂给 CSS。换皮不需要也不应该动它。",
+    "素材由 `node tools/build-theme-butterfly.js` 从 `素材/` 重新生成（立绘走 ffmpeg 缩放保 RGBA，装饰走 ffmpeg 按 maxW 缩放）。"
+  ]
+}
