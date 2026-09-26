@@ -1,8 +1,7 @@
 /* 应用外壳 · Electron 主进程。
  *
- * 面板做成启动器那种"手裁板"界面的风格（参照 diana-multi-app-launcher 的打包程序）：
- * 不规则板形 + 板中央是**当前皮肤的立绘** + 底部按钮 deck + 板外状态卡。
- * 皮肤与宠物各一个"切到下一个"的循环按钮 —— 按现有顺序轮换，不列列表。
+ * 面板界面 = Superdesign C1 v8「情报页 · 抽屉」：左列整身动态立绘（webm alpha），
+ * 中列抽屉条（5 格缩略图，点格直接换肤），底栏 明暗三态 / 桌宠 / ZCode 路径 / 注入动作。
  *
  * **主进程不碰 CDP，也不读库**，只做两件事：起停子进程、转发面板请求。
  * 原因是 Electron 33 = Node 20.18：既没有全局 WebSocket（CDP 连不上，而且失败是静默的），
@@ -189,10 +188,13 @@ ipcMain.handle('panel:set-mode', async (_event, mode: PanelState['mode']) => {
   return { applied: applied.ok ? applied.data : { ok: false, error: applied.error }, ...(await panelSnapshot()) };
 });
 
-ipcMain.handle('panel:apply', async () => {
-  const skinId = await ensureSkinId();
+/* 注入只发生在主按钮：它把面板当前**预选**的皮肤 id 带上来（点选只是预览，不注入），
+   没带 id 才回落到"实际已注入"的那只。 */
+ipcMain.handle('panel:apply', async (_event, id?: string) => {
+  const skinId = (typeof id === 'string' && id) ? id : await ensureSkinId();
   if (!skinId) return { error: '没有可用主题' };
   const applied = await runCli(['apply', '--skin', skinId, '--mode', panelState.mode], 150_000);
+  panelState.skinId = skinId;
   return { applied: applied.ok ? applied.data : { ok: false, error: applied.error }, ...(await panelSnapshot()) };
 });
 
@@ -228,7 +230,7 @@ ipcMain.handle('panel:pick-exe', async () => {
   };
 });
 
-/* 以调试端口重启目标应用并立刻注入。
+/* 以调试端口重启目标应用并立刻注入，注入的是面板**预选**的皮肤。
  * 之所以由面板自己发起：重启会结束目标应用（连带结束里面正在跑的会话），
  * 这个过程必须由用户在面板上明确点一下，不能塞进普通注入里悄悄做。
  *
@@ -236,14 +238,15 @@ ipcMain.handle('panel:pick-exe', async () => {
  *   · 一次子进程搞定 —— CLI 用 --panel-state 把面板状态一起带回来，不再前后各取一次快照；
  *   · 进度实时转发 —— 重启要等应用真正启动，按钮上得看得见在做什么；
  *   · 不预先取快照 —— 目标应用没带调试口时，每个探测都要等超时，点一下先白等好几秒。 */
-ipcMain.handle('panel:relaunch-apply', async (event) => {
-  const skinId = await ensureSkinId();
+ipcMain.handle('panel:relaunch-apply', async (event, id?: string) => {
+  const skinId = (typeof id === 'string' && id) ? id : await ensureSkinId();
   if (!skinId) return { error: '没有可用主题' };
   const result = await runCliStreaming(
     ['relaunch', '--skin', skinId, '--mode', panelState.mode, '--apply', '--progress', '--panel-state'],
     (text) => { try { event.sender.send('panel:progress', text); } catch { /* 面板已关 */ } },
   );
   const data = result.ok ? (result.data as { relaunched?: unknown; applied?: unknown; panel?: Record<string, unknown> }) : null;
+  if (data) panelState.skinId = skinId;
   return {
     relaunched: data?.relaunched ?? { ok: false, error: result.error },
     applied: data?.applied ?? null,
@@ -300,14 +303,17 @@ function createWindow(): BrowserWindow {
     title: 'Painting Skin Theme',
     // 不要默认 Electron 图标
     icon: fs.existsSync(ICON) ? ICON : undefined,
-    width: 620,
-    height: 745,
-    // 透明窗口：板子是不规则形状，若窗口本身仍是不透明矩形，外面就必然留一圈方形边框。
-    // transparent + frame:false 之后，只有板子与卡片自己的形状可见，其余区域透出桌面。
-    transparent: true,
+    // C1 v8 的画布规格：1080×720，左列 500px 立绘 + 抽屉条 + 72px 底栏。
+    // 允许缩放：面板是流式布局（左列定宽、抽屉条与底栏随窗口伸缩），放大缩小都不破版。
+    width: 1080,
+    height: 720,
+    // C1 v8 是不透明满幅界面，透明窗口已无形状意义（那是旧异形板的需求）；且透明窗口在
+    // Windows 上视频帧走独立合成路径不上屏（实测 <video> 播放中但画面全透明），关闭后视频正常。
+    transparent: false,
     frame: false,
-    hasShadow: false,
-    resizable: false,
+    hasShadow: true,
+    backgroundColor: '#171718',   // 内容加载前先铺底色，避免白闪
+    resizable: true,
     autoHideMenuBar: true,
     webPreferences: {
       // 面板是本地自带页面，不存在远端内容；为了少一层 preload 脚手架直接开 node。

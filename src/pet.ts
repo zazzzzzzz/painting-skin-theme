@@ -8,10 +8,12 @@
  *      （写入 localStorage 后派发 diana-pet 事件即时生效）
  *
  * 素材以 `file:///` URL 注入：ZCode 页面本身就是 file:// 源，Chromium 能直接读；
- * 无需内嵌 base64（那会把 payload 撑大），查询串带 mtime 防止缓存旧 GIF。 */
+ * 无需内嵌 base64（那会把 payload 撑大），查询串带 mtime 防止缓存旧 GIF。
+ * 那套「asar 解包 + file:// URL」的工具在 src/media-url.ts，与动态立绘（themes/<id>/assets 下的 .webm）共用。 */
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileUrl, unpackedIfNeeded } from './media-url';
 
 export interface PetDef {
   id: string;
@@ -22,24 +24,7 @@ export interface PetDef {
   states: Record<string, string>;
 }
 
-/** asar 内的路径要改写到 app.asar.unpacked：
- *  这些 GIF 是以 file:// URL 交给 **ZCode 页面**的 <img> 去读的，而页面不是 Electron 进程，
- *  读不了 asar 这个虚拟文件系统 —— 所以打包时必须解包（见 package.json 的 asarUnpack）。 */
-function unpackedIfNeeded(filePath: string): string {
-  const marker = 'app.asar' + path.sep;
-  const index = filePath.indexOf(marker);
-  if (index < 0) return filePath;
-  const candidate = filePath.slice(0, index) + 'app.asar.unpacked' + path.sep + filePath.slice(index + marker.length);
-  return fs.existsSync(candidate) ? candidate : filePath;
-}
-
 const STATE_EXTENSIONS = ['.gif', '.webp', '.png'];
-
-/** 与来源一致的 file URL 构造：转义 # 与 ?，避免被当成 URL 片段/查询 */
-function fileUrl(absolutePath: string): string {
-  const normalized = absolutePath.replace(/\\/g, '/');
-  return 'file:///' + encodeURI(normalized).replace(/#/g, '%23').replace(/\?/g, '%3F');
-}
 
 /** 扫描 `<root>/assets/pet/<id>/`：一目录一宠物，文件名（去扩展名）即状态键。
  *  同一状态多格式时 .webp 优先（8 位 alpha 轮廓更平滑）。 */

@@ -1,11 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "butterfly-line",
-  "name": "蝶影线稿 · 粉发立绘",
+  "name": "蝶影 · 粉发立绘",
   "author": "立绘与装饰：素材/ · 实现基准：themes/diana · 主题：painting-skin-theme",
-
   "adapterVersion": "painting-skin-butterfly-line-v1",
-
   "app": {
     "id": "zcode",
     "processName": "ZCode.exe",
@@ -13,13 +11,11 @@
     "targetUrlHint": "renderer/index.html",
     "rendererHostClass": "diana-zcode-host"
   },
-
   "skin": {
     "css": "skin/theme.css",
     "tokens": "skin/zcode-tokens.css",
     "artworkContract": "skin/zcode-artwork-contract.css"
   },
-
   "assets": {
     "characterDark": "assets/character.png",
     "characterLight": "assets/character.png",
@@ -32,9 +28,11 @@
     "acaoHeart": "assets/acao-heart.png",
     "acaoCheer": "assets/acao-cheer.png"
   },
-
-  "modes": ["auto", "dark", "light"],
-
+  "modes": [
+    "auto",
+    "dark",
+    "light"
+  ],
   "notes": [
     "**页面端运行时不在本目录**：运行时是全项目一份的引擎文件（runtime/runtime-template.js），主题清单里不写 `skin.runtime` 就用它；要自带一份覆盖时写 `skin.runtime` 指到主题目录内的文件。",
     "**实现基准是 themes/diana/**：skin/ 下的四份文件（theme.css / runtime-template.js / zcode-tokens.css / zcode-artwork-contract.css）都由 diana 那份照搬，只有素材换了。差异全部落在 assets/ 与 theme.json 的清单上 —— 这样两套皮肤的行为（明暗三态、美术层几何、导轨、复核口径）完全一致，出问题可以直接对拉。",

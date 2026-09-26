@@ -23,6 +23,14 @@ tools/out/
 # ---------- 运行时/工具留下的状态 ----------
 .zcode/
 
+# ---------- Superdesign 的中间文件（提示词 / 截图 / 临时 HTML）----------
+# init/、design-system.md、resume.json 是设计上下文，要进仓库；tmp/ 不是
+.superdesign/tmp/
+
+# ---------- 动态立绘视频（体积大，不进仓库；由 tools/optimize-motion.js 从帧序列生成）----------
+themes/*/assets/*.webm
+themes/*/assets/*.webm.json
+
 # ---------- 杂项 ----------
 *.log
 *.tmp

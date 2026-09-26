@@ -134,7 +134,12 @@ html.diana-zcode-host {
       && rect.top >= 30
       && rect.top <= 90
       && rect.width >= innerWidth * .3
-      && rect.height >= innerHeight * .68;
+      && rect.height >= innerHeight * .68
+      /* **高度上限**：主表面不可能比视口还高 —— 比视口高的只可能是滚动内容（消息列表）。
+       * 少了这条，会话滚到顶时消息列表的 rect.top 恰好是 53、宽高也都达标，于是被认成工作区、
+       * 美术层被挂进去（实测 chrome 的尺寸被写成 top:-9588/height:12501 = 消息列表的矩形），
+       * 而立在它底边的立绘就随滚动上下跳（用户报的"立绘上下抖动"，重启客户端能暂时恢复）。 */
+      && rect.height <= innerHeight * 1.02;
   }
 
   function findWorkspace() {
@@ -286,6 +291,33 @@ html.diana-zcode-host {
     return state.railStats;
   }
 
+  /* 动态立绘（可选）：清单里声明了 characterMotion 时，角色节点是 <video> 而不是带背景图的 span。
+   * 为什么走 file:// 视频而不是内联素材：素材 base64 内联进 CSS 有硬上限 —— 单条声明过长会被**静默丢弃**
+   * （实测 2.5MB base64 时那条变量算成空字符串，元素完全不绘制且不报错），4K 动画必然超限。
+   * 视频从 file:// 读，大小只受磁盘限制；尺寸与定位仍由主题的 .diana-zcode-character 决定。
+   * 兜底：主题会把 .diana-zcode-character 的背景设成同构图的静止帧，但动态立绘必须把它压掉（否则视频叠在
+   * 静止图上会重影）；视频加载失败时再把背景放回来 —— 于是"视频挂了还有静止立绘"。 */
+  function buildMotionCharacter(src) {
+    const video = document.createElement("video");
+    video.src = src;
+    video.muted = true;                       // 静音是自动播放的前提
+    video.loop = true;
+    video.autoplay = true;
+    video.playsInline = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("disablepictureinpicture", "");
+    video.preload = "auto";
+    video.draggable = false;
+    video.style.objectFit = "contain";        // 与 CSS 背景的 contain 对齐
+    video.style.pointerEvents = "none";
+    video.style.backgroundImage = "none";     // 压掉兜底底图，避免重影
+    video.style.backdropFilter = "none";
+    video.addEventListener("error", () => { video.style.backgroundImage = ""; }, { once: true });
+    const started = video.play();
+    if (started && typeof started.catch === "function") started.catch(() => { /* 自动播放被拒时不报错，等用户交互 */ });
+    return video;
+  }
+
   function buildChrome() {
     const chrome = document.createElement("div");
     chrome.id = chromeId;
@@ -311,7 +343,9 @@ html.diana-zcode-host {
       "diana-zcode-acao diana-zcode-acao-cheer",
       "diana-zcode-character"
     ]) {
-      const element = document.createElement("span");
+      const element = className === "diana-zcode-character" && payload.motion
+        ? buildMotionCharacter(payload.motion)
+        : document.createElement("span");
       element.className = className;
       cluster.append(element);
     }
@@ -331,6 +365,10 @@ html.diana-zcode-host {
 
   function detachWorkspace() {
     detachRail();
+    /* 动态立绘是 <video>：节点被移除不等于停止解码，显式 pause + 清 src 才算真的停 */
+    for (const video of document.querySelectorAll("#" + chromeId + " video")) {
+      try { video.pause(); video.removeAttribute("src"); video.load(); } catch (error) { /* 已失效 */ }
+    }
     state.resizeObserver?.disconnect();
     state.resizeObserver = null;
     document.getElementById(chromeId)?.remove();

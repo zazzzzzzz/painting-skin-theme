@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "shuyan-line",
+  "name": "临江仙 · 谭舒雁",
+  "author": "立绘：明日方舟 谭舒雁-临江仙.webm 动态立绘（VP9+alpha，30fps 原生，601 帧整段循环） · 涂鸦：Diana 线稿换色 · 实现基准：themes/diana",
+  "adapterVersion": "painting-skin-shuyan-line-v1",
+  "app": {
+    "id": "zcode",
+    "processName": "ZCode.exe",
+    "debugPort": 9344,
+    "targetUrlHint": "renderer/index.html",
+    "rendererHostClass": "diana-zcode-host"
+  },
+  "skin": {
+    "css": "skin/theme.css",
+    "tokens": "skin/zcode-tokens.css",
+    "artworkContract": "skin/zcode-artwork-contract.css"
+  },
+  "assets": {
+    "characterMotion": "assets/character-motion.webm",
+    "characterDark": "assets/character-still.webp",
+    "characterLight": "assets/character-still.webp",
+    "doodle": "assets/doodle.png",
+    "upper": "assets/upper.png",
+    "corner": "assets/corner.png",
+    "star": "assets/star.png",
+    "candyWrapped": "assets/candy-wrapped.png",
+    "candyLollipop": "assets/candy-lollipop.png",
+    "acaoHeart": "assets/acao-heart.png",
+    "acaoCheer": "assets/acao-cheer.png"
+  },
+  "modes": [
+    "auto",
+    "dark",
+    "light"
+  ],
+  "notes": [
+    "**由 tools/build-theme-motion.js 生成**（可重跑）：量帧序列的并集内容框与配色锚点 → 编码动态立绘 → 换 Diana 的涂鸦线色 → 以 diana 为基准重写主题色。手改样式前先看那个脚本，别让下次重跑把它们冲掉。",
+    "**动态立绘**：源是 601 帧 30fps 的带 alpha 序列（裁剪窗口 2564×1314 @(0,0)，只切掉四周全透明空白；并集保证每帧的飘带都在框内）。交付视频由 tools/optimize-motion.js 按**该主题实测显示宽（×1）**重编（最小无缝循环 + 视觉无损 CRF 档），**实际循环帧数 / 交付尺寸 / CRF 记在同目录的 assets/character-motion.webm.json**，运行时挂成 <video> 从 file:// 播，**不受 data URI 长度限制**（内联大图/视频会撑爆单条 CSS 声明并被静默丢弃）。assets/character-still.webp 是同构图静止帧：面板中央立绘用它，页面里视频加载失败时作 CSS 背景兜底。",
+    "**涂鸦直接使用 Diana 的原文件**（与源文件逐字节一致）：两种极性都走「形状取自素材 alpha 蒙版、颜色取自 token」，所以源文件的 RGB 不参与显示，换主题只改 token、不需要重映射一版素材。",
+    "**配色实测**（暗夜 accent #3caedd、日间 #186c91、族中心 197°）：主色 #27394c / 辉光 #91b5c4 / 近白 #eaeef2 / 近黑 #100f17；中性角色明度阶梯照搬 diana、只换色相。"
+  ]
+}

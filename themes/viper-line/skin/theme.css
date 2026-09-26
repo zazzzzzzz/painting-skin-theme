@@ -1,0 +1,647 @@
+/* 桃白 · Viper —— ZCode 皮肤样式层。
+ *
+ * **实现基准 = themes/diana/skin/theme.css**（明度阶梯、组件钩子、美术层几何、消息导轨全部照搬）；
+ * 页面端运行时用全项目共享的 runtime/runtime-template.js。
+ *
+ * 配色由 tools/build-theme-motion.js 从立绘帧序列里**实测得出**（可重跑）：
+ *   主色 #be517f（335°）· 辉光 #de8bb2（332°）· 近白 #f8efed · 近黑 #160d15
+ *   → 族中心色相 332°，强调色取辉光实测值（暗夜 #dd3c86 / 日间 #911850），
+ *     涂鸦直接用 Diana 原文件，颜色由 CSS token（line-berry/coral/gold）给。
+ * 中性角色的明度阶梯照搬 diana、只换色相 —— 直接改 S/L 会把 UI 层级搞坏。
+ *
+ * 素材来源：NIKKE neeke/Viper_c112.webm 原生立绘（VP9+alpha，60fps 隔帧取 30fps）。
+ * 立绘是**动态立绘**：清单里声明 assets.characterMotion（VP9+alpha 的 WebM），运行时挂成 <video> 从
+ * file:// 播；下面 .diana-zcode-character-cluster 的盒子按素材纵横比 0.384 定。 */
+html.diana-zcode-host.theme-zai-dark {
+  --diana-zcode-surface: #0f0c0d;
+  --diana-zcode-panel: #191416;
+  --diana-zcode-panel-strong: #1f191c;
+  --diana-zcode-sidebar: #1a1618;
+  --diana-zcode-ink: #f3eef0;
+  --diana-zcode-muted: #a9a1a5;
+  --diana-zcode-accent: #dd3c86;
+  --diana-zcode-accent-soft: #38242d;
+  --diana-zcode-border: #2d2629;
+  --diana-zcode-line-coral: #dd3c86;
+  --diana-zcode-line-berry: #cc196d;
+  --diana-zcode-line-gold: #f2e9ed;
+  --diana-zcode-rail-normal: #64354b;
+  --diana-zcode-rail-major: #754059;
+  --diana-zcode-rail-hover: #dd3c86;
+  --diana-zcode-rail-current: #e387b2;
+  --diana-zcode-character-image: var(--diana-zcode-image-character-dark);
+  --diana-zcode-character-opacity: .66;
+  --diana-zcode-character-filter: brightness(.98) saturate(.9) contrast(.99) drop-shadow(0 24px 46px rgb(0 0 0 / 26%));
+  --diana-zcode-doodle-opacity: .42;
+  --diana-zcode-upper-opacity: .27;
+
+  --color-background: var(--diana-zcode-surface);
+  --color-background-win-alt: var(--diana-zcode-panel-strong);
+  --color-background-alt: rgb(31 25 28 / 68%);
+  --color-header: var(--diana-zcode-panel);
+  --color-panel: var(--diana-zcode-panel);
+  --color-sidebar: var(--diana-zcode-sidebar);
+  --color-card: var(--diana-zcode-panel-strong);
+  --color-popover: var(--diana-zcode-panel-strong);
+  --color-popover-header: var(--diana-zcode-panel);
+  --color-input: var(--diana-zcode-panel-strong);
+  --color-border: rgb(221 60 134 / 17%);
+  --color-border-hover: rgb(221 60 134 / 28%);
+  --color-hover: rgb(221 60 134 / 9%);
+  --color-selected: rgb(221 60 134 / 17%);
+  --color-surface: rgb(221 60 134 / 7%);
+  --color-surface-hover: rgb(221 60 134 / 14%);
+  --color-accent: var(--diana-zcode-accent-soft);
+  --color-brand: var(--diana-zcode-ink);
+  --color-primary: var(--diana-zcode-ink);
+  --color-primary-foreground: var(--diana-zcode-surface);
+  --color-foreground: var(--diana-zcode-ink);
+  --color-foreground-subtle: var(--diana-zcode-muted);
+  --color-foreground-subtlest: rgb(169 161 165 / 58%);
+
+  /* ---- 应用自己的"浮层 / 面"级 token ----
+   * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
+   * .theme-zai-dark/light 里；主题不覆盖它们，弹窗就会继续用应用的中性灰（`.bg-menu` →
+   * var(--color-menu) = #2b2b2b）。实测：设置页"界面语言"下拉框背景 = rgb(43,43,43)（见
+   * .verify/popover-tokens.js）。这里只引用主题自身的 token，所以三套皮肤用的是同一段映射。 */
+  --color-menu: var(--diana-zcode-panel-strong);
+  --color-menu-hover: color-mix(in srgb, var(--diana-zcode-accent) 14%, transparent);
+  --color-secondary: var(--diana-zcode-panel-strong);
+  --color-popover-foreground: var(--diana-zcode-ink);
+  --color-popover-border: var(--diana-zcode-border);
+  --color-tooltip: var(--diana-zcode-panel-strong);
+  --color-tooltip-foreground: var(--diana-zcode-ink);
+  --color-tooltip-tag: color-mix(in srgb, var(--diana-zcode-accent) 16%, transparent);
+  --color-tooltip-tag-foreground: var(--diana-zcode-ink);
+  --color-toast: var(--diana-zcode-panel-strong);
+  --color-card-selected: var(--color-selected);
+  --color-input-border-focused: var(--diana-zcode-accent);
+}
+
+html.diana-zcode-host.theme-zai-light {
+  --diana-zcode-surface: #fbf6f8;
+  --diana-zcode-panel: #ffffff;
+  --diana-zcode-panel-strong: #fff8fb;
+  --diana-zcode-sidebar: #f8f3f5;
+  --diana-zcode-ink: #2c2528;
+  --diana-zcode-muted: #7e7177;
+  --diana-zcode-accent: #911850;
+  --diana-zcode-accent-soft: #f2dce6;
+  --diana-zcode-border: #e8dfe3;
+  --diana-zcode-line-coral: #cc196d;
+  --diana-zcode-line-berry: #911850;
+  --diana-zcode-line-gold: #ca729b;
+  --diana-zcode-rail-normal: rgb(145 24 80 / 55%);
+  --diana-zcode-rail-major: rgb(145 24 80 / 55%);
+  --diana-zcode-rail-hover: rgb(145 24 80 / 72%);
+  --diana-zcode-rail-current: rgb(174 55 96 / 92%);
+  --diana-zcode-character-image: var(--diana-zcode-image-character-light);
+  --diana-zcode-character-opacity: .72;
+  --diana-zcode-character-filter: saturate(.98) brightness(.97) contrast(1.04) drop-shadow(0 22px 40px rgb(22 13 21 / 26%));
+  --diana-zcode-doodle-opacity: .48;
+  --diana-zcode-upper-opacity: .28;
+
+  --color-background: var(--diana-zcode-surface);
+  --color-background-win-alt: #f2ecef;
+  --color-background-alt: rgb(31 25 28 / 68%);
+  --color-header: var(--diana-zcode-panel);
+  --color-panel: var(--diana-zcode-panel);
+  --color-sidebar: var(--diana-zcode-sidebar);
+  --color-card: var(--diana-zcode-panel);
+  --color-popover: var(--diana-zcode-panel);
+  --color-popover-header: var(--diana-zcode-panel-strong);
+  --color-input: var(--diana-zcode-panel);
+  --color-border: rgb(145 24 80 / 16%);
+  --color-border-hover: rgb(145 24 80 / 27%);
+  --color-hover: rgb(145 24 80 / 7%);
+  --color-selected: rgb(145 24 80 / 13%);
+  --color-surface: rgb(145 24 80 / 5%);
+  --color-surface-hover: rgb(145 24 80 / 10%);
+  --color-accent: var(--diana-zcode-accent-soft);
+  --color-brand: var(--diana-zcode-ink);
+  --color-primary: var(--diana-zcode-ink);
+  --color-primary-foreground: var(--diana-zcode-panel);
+  --color-foreground: var(--diana-zcode-ink);
+  --color-foreground-subtle: var(--diana-zcode-muted);
+  --color-foreground-subtlest: rgb(126 113 119 / 56%);
+
+  /* ---- 应用自己的"浮层 / 面"级 token ----
+   * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
+   * .theme-zai-dark/light 里；主题不覆盖它们，弹窗就会继续用应用的中性灰（`.bg-menu` →
+   * var(--color-menu) = #2b2b2b）。实测：设置页"界面语言"下拉框背景 = rgb(43,43,43)（见
+   * .verify/popover-tokens.js）。这里只引用主题自身的 token，所以三套皮肤用的是同一段映射。 */
+  --color-menu: var(--diana-zcode-panel-strong);
+  --color-menu-hover: color-mix(in srgb, var(--diana-zcode-accent) 14%, transparent);
+  --color-secondary: var(--diana-zcode-panel-strong);
+  --color-popover-foreground: var(--diana-zcode-ink);
+  --color-popover-border: var(--diana-zcode-border);
+  --color-tooltip: var(--diana-zcode-panel-strong);
+  --color-tooltip-foreground: var(--diana-zcode-ink);
+  --color-tooltip-tag: color-mix(in srgb, var(--diana-zcode-accent) 16%, transparent);
+  --color-tooltip-tag-foreground: var(--diana-zcode-ink);
+  --color-toast: var(--diana-zcode-panel-strong);
+  --color-card-selected: var(--color-selected);
+  --color-input-border-focused: var(--diana-zcode-accent);
+}
+
+html.diana-zcode-host body {
+  color: var(--diana-zcode-ink);
+  background-color: var(--diana-zcode-surface);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"],
+html.diana-zcode-host [data-testid="sidebar"] {
+  color: var(--diana-zcode-muted);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--diana-zcode-accent) 4%, transparent), transparent 210px),
+    linear-gradient(90deg, color-mix(in srgb, var(--diana-zcode-accent) 7%, transparent), transparent 38%),
+    var(--diana-zcode-sidebar) !important;
+  scrollbar-color: color-mix(in srgb, var(--diana-zcode-accent) 28%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] {
+  position: relative;
+  box-shadow: inset -1px 0 color-mix(in srgb, var(--diana-zcode-accent) 8%, transparent);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"]::after {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  bottom: 18px;
+  z-index: 3;
+  width: 1px;
+  content: "";
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--diana-zcode-accent) 38%, transparent) 22%, color-mix(in srgb, var(--diana-zcode-accent) 18%, transparent) 72%, transparent);
+  pointer-events: none;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] :is([data-testid="task-new-button"], button[data-icon="inline-start"]) {
+  border: 1px solid transparent !important;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] :is([data-testid="task-new-button"], button[data-icon="inline-start"]):hover {
+  background: color-mix(in srgb, var(--diana-zcode-accent) 11%, transparent) !important;
+  border-color: color-mix(in srgb, var(--diana-zcode-accent) 14%, transparent) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--diana-zcode-accent) 4%, transparent);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid="task-new-button"] svg {
+  color: color-mix(in srgb, var(--diana-zcode-accent) 84%, var(--diana-zcode-ink));
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [role="tablist"][data-slot="tabs-list"] {
+  background: color-mix(in srgb, var(--diana-zcode-panel-strong) 88%, var(--diana-zcode-accent)) !important;
+  border: 1px solid color-mix(in srgb, var(--diana-zcode-accent) 12%, transparent);
+  box-shadow: inset 0 1px color-mix(in srgb, var(--diana-zcode-ink) 4%, transparent);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [role="tab"][data-slot="tabs-trigger"] {
+  transition: color 150ms ease, background-color 150ms ease, box-shadow 150ms ease !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [role="tab"][data-slot="tabs-trigger"]::after {
+  display: none !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [role="tab"][aria-selected="true"] {
+  color: var(--diana-zcode-ink) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--diana-zcode-panel) 91%, var(--diana-zcode-accent)), var(--diana-zcode-panel)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--diana-zcode-accent) 17%, transparent), 0 2px 8px color-mix(in srgb, var(--diana-zcode-accent) 10%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] button[data-slot="collapsible-trigger"] {
+  color: color-mix(in srgb, var(--diana-zcode-muted) 78%, var(--diana-zcode-accent)) !important;
+  letter-spacing: .025em;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="workspace-item-"] {
+  border: 1px solid transparent !important;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="workspace-item-"]:hover {
+  background: color-mix(in srgb, var(--diana-zcode-accent) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--diana-zcode-accent) 10%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="workspace-item-"] svg {
+  color: color-mix(in srgb, var(--diana-zcode-muted) 76%, var(--diana-zcode-accent));
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"] {
+  position: relative;
+  border: 1px solid transparent !important;
+  transition: color 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"]:hover {
+  background: color-mix(in srgb, var(--diana-zcode-accent) 11%, transparent) !important;
+  border-color: color-mix(in srgb, var(--diana-zcode-accent) 11%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"].bg-selected {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--diana-zcode-accent) 21%, transparent), color-mix(in srgb, var(--diana-zcode-accent) 10%, transparent) 72%, transparent) !important;
+  border-color: color-mix(in srgb, var(--diana-zcode-accent) 22%, transparent) !important;
+  box-shadow: inset 2px 0 var(--diana-zcode-accent), 0 4px 14px color-mix(in srgb, var(--diana-zcode-accent) 10%, transparent) !important;
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid^="task-item-"].bg-selected::before {
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 3px;
+  height: 14px;
+  content: "";
+  background: linear-gradient(180deg, color-mix(in srgb, var(--diana-zcode-accent) 82%, white), var(--diana-zcode-accent));
+  border-radius: 999px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--diana-zcode-accent) 42%, transparent);
+  transform: translateY(-50%);
+}
+
+html.diana-zcode-host [data-workspace-sidebar-panel="true"] [data-testid="login-trigger"]:hover {
+  background: color-mix(in srgb, var(--diana-zcode-accent) 9%, transparent) !important;
+}
+
+html.diana-zcode-host .diana-zcode-workspace {
+  background-color: var(--diana-zcode-surface);
+}
+
+html.diana-zcode-host #diana-zcode-chrome {
+  position: fixed;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none !important;
+  user-select: none !important;
+  container-type: inline-size;
+}
+
+html.diana-zcode-host .diana-zcode-foreground {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+
+html.diana-zcode-host #diana-zcode-chrome,
+html.diana-zcode-host #diana-zcode-chrome * {
+  pointer-events: none !important;
+}
+
+html.diana-zcode-host #diana-zcode-chrome > *,
+html.diana-zcode-host .diana-zcode-character-cluster > * {
+  position: absolute;
+  display: block;
+}
+
+/* 美术层三个节点的几何与配色**必须赢过 Diana 的契约表**（zcode-artwork-contract.css，由注入器
+ * 排在主题之前注入）。契约里那三条规则写的是 `#diana-zcode-chrome > .diana-zcode-*`，比这里的
+ * `.diana-zcode-*` 多一个 id，一旦同页就会出现"主题里的几何全是死规则"：实测涂鸦从 340×333
+ * (left 18 / bottom clamp(90px,9vh,118px)) 变成契约的 235×230 (left 14 / bottom -30px)，
+ * 角线与上缘线同样被改。所以这三条选择器显式带上 `#diana-zcode-chrome >`，靠注入顺序（主题在最后）
+ * 取回主导权 —— 这是本项目对 Diana 原版级联的又一处刻意偏离。 */
+html.diana-zcode-host #diana-zcode-chrome > .diana-zcode-corner-line {
+  top: 54px;
+  left: 34px;
+  width: clamp(300px, 50cqw, 820px);
+  aspect-ratio: 1600 / 485;
+  background: var(--diana-zcode-accent);
+  -webkit-mask: var(--diana-zcode-image-corner) left center / contain no-repeat;
+  mask: var(--diana-zcode-image-corner) left center / contain no-repeat;
+  opacity: var(--diana-zcode-upper-opacity);
+}
+
+html.diana-zcode-host #diana-zcode-chrome > .diana-zcode-upper-line {
+  inset: 0;
+  /* width / aspect-ratio 必须显式复位：契约表给上缘线的是一个 342×127 的盒子，主题这套画法
+     是"元素铺满整个 chrome + 蒙版把线摆到右上角（top 44px right 18px，350px 宽）"。
+     少了复位，盒高只有 127px 而蒙版高 130px、还要从 top 44px 起算 —— 线会被裁掉下半截。 */
+  width: auto;
+  aspect-ratio: auto;
+  background: var(--diana-zcode-accent);
+  -webkit-mask-image: var(--diana-zcode-image-upper);
+  -webkit-mask-position: top 44px right 18px;
+  -webkit-mask-size: clamp(230px, 45cqw, 350px) auto;
+  -webkit-mask-repeat: no-repeat;
+  mask-image: var(--diana-zcode-image-upper);
+  mask-position: top 44px right 18px;
+  mask-size: clamp(230px, 45cqw, 350px) auto;
+  mask-repeat: no-repeat;
+  opacity: var(--diana-zcode-upper-opacity);
+}
+
+html.diana-zcode-host #diana-zcode-chrome > .diana-zcode-doodle {
+  left: 18px;
+  bottom: clamp(90px, 9vh, 118px);
+  width: clamp(230px, 44cqw, 340px);
+  aspect-ratio: 1267 / 1241;
+  opacity: var(--diana-zcode-doodle-opacity);
+}
+
+html.diana-zcode-host .diana-zcode-character-cluster {
+  right: -12px;
+  bottom: -6px;
+  width: clamp(214px, 60cqw, 357px);
+  height: min(85vh, 930px);
+}
+
+html.diana-zcode-host .diana-zcode-character {
+  z-index: 1;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--diana-zcode-character-image) right bottom / contain no-repeat;
+  filter: var(--diana-zcode-character-filter);
+  opacity: var(--diana-zcode-character-opacity);
+}
+
+html.diana-zcode-host .diana-zcode-star {
+  z-index: 2;
+  aspect-ratio: 1;
+}
+
+html.diana-zcode-host .diana-zcode-star-a {
+  left: 7%;
+  top: 44%;
+  width: clamp(25px, 3.8cqw, 34px);
+  transform: rotate(-11deg);
+}
+
+html.diana-zcode-host .diana-zcode-star-b {
+  right: 3%;
+  top: 27%;
+  width: clamp(34px, 5cqw, 46px);
+  transform: rotate(9deg);
+}
+
+html.diana-zcode-host .diana-zcode-candy {
+  z-index: 2;
+  aspect-ratio: 1;
+}
+
+html.diana-zcode-host .diana-zcode-candy-wrapped {
+  left: 2%;
+  top: 55%;
+  width: clamp(56px, 7.5cqw, 74px);
+  transform: rotate(-12deg);
+}
+
+html.diana-zcode-host .diana-zcode-candy-lollipop {
+  right: 5%;
+  top: 59%;
+  width: clamp(60px, 8.2cqw, 80px);
+  transform: rotate(8deg);
+}
+
+html.diana-zcode-host .diana-zcode-acao {
+  z-index: 2;
+  aspect-ratio: 1;
+}
+
+html.diana-zcode-host .diana-zcode-acao-heart {
+  left: 16.3%;
+  top: 69%;
+  width: clamp(92px, 12cqw, 118px);
+  transform: rotate(-4deg);
+}
+
+html.diana-zcode-host .diana-zcode-acao-cheer {
+  right: 6%;
+  top: 73%;
+  width: clamp(90px, 11.4cqw, 112px);
+  transform: rotate(4deg);
+}
+
+/* 同样要赢过契约表：契约给涂鸦画的是"主题色 + 形状蒙版"，暗夜这版要的是**直接铺素材本身**
+   （素材自带暖桃粉线色，见 assets/diana-doodle-v2.png），两者是不同的画法，必须由主题压住。 */
+html.diana-zcode-host.theme-zai-dark #diana-zcode-chrome > .diana-zcode-doodle {
+  background: var(--diana-zcode-line-berry);
+  -webkit-mask: var(--diana-zcode-image-doodle) center / contain no-repeat;
+  mask: var(--diana-zcode-image-doodle) center / contain no-repeat;
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--diana-zcode-accent) 30%, transparent));
+}
+
+html.diana-zcode-host.theme-zai-dark .diana-zcode-star {
+  background: var(--diana-zcode-line-gold);
+  -webkit-mask: var(--diana-zcode-image-star) center / contain no-repeat;
+  mask: var(--diana-zcode-image-star) center / contain no-repeat;
+  opacity: .7;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--diana-zcode-accent) 26%, transparent));
+}
+
+html.diana-zcode-host.theme-zai-dark .diana-zcode-candy {
+  background: var(--diana-zcode-line-coral);
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  opacity: .78;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--diana-zcode-accent) 26%, transparent));
+}
+
+html.diana-zcode-host.theme-zai-dark .diana-zcode-candy-wrapped {
+  -webkit-mask-image: var(--diana-zcode-image-candy-wrapped);
+  mask-image: var(--diana-zcode-image-candy-wrapped);
+}
+
+html.diana-zcode-host.theme-zai-dark .diana-zcode-candy-lollipop {
+  -webkit-mask-image: var(--diana-zcode-image-candy-lollipop);
+  mask-image: var(--diana-zcode-image-candy-lollipop);
+}
+
+html.diana-zcode-host.theme-zai-dark .diana-zcode-acao {
+  background: var(--diana-zcode-line-berry);
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  opacity: .6;
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--diana-zcode-accent) 22%, transparent));
+}
+
+html.diana-zcode-host.theme-zai-dark .diana-zcode-acao-heart {
+  -webkit-mask-image: var(--diana-zcode-image-acao-heart);
+  mask-image: var(--diana-zcode-image-acao-heart);
+}
+
+html.diana-zcode-host.theme-zai-dark .diana-zcode-acao-cheer {
+  -webkit-mask-image: var(--diana-zcode-image-acao-cheer);
+  mask-image: var(--diana-zcode-image-acao-cheer);
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-corner-line,
+html.diana-zcode-host.theme-zai-light .diana-zcode-doodle,
+html.diana-zcode-host.theme-zai-light .diana-zcode-acao {
+  background: var(--diana-zcode-line-berry);
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-upper-line,
+html.diana-zcode-host.theme-zai-light .diana-zcode-candy {
+  background: var(--diana-zcode-line-coral);
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-doodle {
+  -webkit-mask: var(--diana-zcode-image-doodle) center / contain no-repeat;
+  mask: var(--diana-zcode-image-doodle) center / contain no-repeat;
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-star {
+  background: var(--diana-zcode-line-gold);
+  -webkit-mask: var(--diana-zcode-image-star) center / contain no-repeat;
+  mask: var(--diana-zcode-image-star) center / contain no-repeat;
+  opacity: .66;
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-candy {
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  opacity: .68;
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-candy-wrapped {
+  -webkit-mask-image: var(--diana-zcode-image-candy-wrapped);
+  mask-image: var(--diana-zcode-image-candy-wrapped);
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-candy-lollipop {
+  -webkit-mask-image: var(--diana-zcode-image-candy-lollipop);
+  mask-image: var(--diana-zcode-image-candy-lollipop);
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-acao {
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  opacity: .62;
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-acao-heart {
+  -webkit-mask-image: var(--diana-zcode-image-acao-heart);
+  mask-image: var(--diana-zcode-image-acao-heart);
+}
+
+html.diana-zcode-host.theme-zai-light .diana-zcode-acao-cheer {
+  -webkit-mask-image: var(--diana-zcode-image-acao-cheer);
+  mask-image: var(--diana-zcode-image-acao-cheer);
+}
+
+html.diana-zcode-host .diana-zcode-message-rail {
+  scrollbar-width: none;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::-webkit-scrollbar {
+  display: none;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::before,
+html.diana-zcode-host .diana-zcode-message-rail::after {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: block;
+  width: 5px;
+  height: 5px;
+  content: "";
+  background: var(--diana-zcode-rail-major);
+  opacity: .9;
+  transform: rotate(45deg);
+  transform-origin: center;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::before {
+  top: 1px;
+  margin: -5px 0 2px 1px;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail::after {
+  bottom: 1px;
+  margin: 2px 0 -5px 1px;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button {
+  position: relative;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button > span {
+  width: 12px !important;
+  height: 2px !important;
+  background: var(--diana-zcode-rail-normal) !important;
+  border-radius: 999px !important;
+  opacity: .72 !important;
+  transform: scaleX(var(--diana-art-scale, .3)) !important;
+  transform-origin: left center !important;
+  transition: background-color 150ms ease, opacity 150ms ease, transform 150ms ease !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-diana-rail-major="true"] > span {
+  background: var(--diana-zcode-rail-major) !important;
+  opacity: .9 !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-visual-tone="mid"] > span {
+  opacity: .72 !important;
+  transform: scaleX(1.25) !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-visual-tone="near"] > span {
+  opacity: .86 !important;
+  transform: scaleX(1.7) !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-visual-tone="peak"] > span,
+html.diana-zcode-host .diana-zcode-message-rail button:hover > span,
+html.diana-zcode-host .diana-zcode-message-rail button:focus-visible > span {
+  background: var(--diana-zcode-rail-hover) !important;
+  opacity: 1 !important;
+  transform: scaleX(2.6) !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-diana-viewport-current="true"] > span,
+html.diana-zcode-host .diana-zcode-message-rail button[data-active="true"] > span,
+html.diana-zcode-host .diana-zcode-message-rail button[aria-current="location"] > span {
+  background: var(--diana-zcode-rail-current) !important;
+  opacity: .78 !important;
+}
+
+html.diana-zcode-host .diana-zcode-message-rail button[data-diana-viewport-current="true"]::before {
+  position: absolute;
+  left: -2px;
+  width: 9px;
+  height: 9px;
+  content: "";
+  background: var(--diana-zcode-rail-current);
+  clip-path: polygon(50% 0, 62% 35%, 100% 50%, 62% 65%, 50% 100%, 38% 65%, 0 50%, 38% 35%);
+  opacity: .78;
+}
+
+@media (max-width: 900px), (max-height: 620px) {
+  html.diana-zcode-host .diana-zcode-character-cluster {
+    opacity: .46;
+    transform: translateX(16%);
+  }
+
+  html.diana-zcode-host .diana-zcode-doodle {
+    opacity: .2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.diana-zcode-host #diana-zcode-chrome,
+  html.diana-zcode-host #diana-zcode-chrome * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

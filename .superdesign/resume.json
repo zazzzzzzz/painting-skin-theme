@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "panel": {
+      "targetKind": "existing-ui",
+      "projectId": "5e838151-f7e9-4add-94b7-61c132655c5c",
+      "baselineDraftId": "5b58dada-e552-45a3-aefc-1c35bfe6712b",
+      "activeDraftId": "5b58dada-e552-45a3-aefc-1c35bfe6712b",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [
+        "app-mark-four-point-star",
+        "f07d50ab-12e1-4a45-93bd-65270816a733",
+        "0d2a0667-86c5-4010-81ca-da5be7aafd11",
+        "84ebaea3-6e0c-4407-bda0-9d8426587f08",
+        "d43be9cc-4d72-4835-a1d9-f7e31f410c14",
+        "7a5c2d42-841c-4863-9141-ecb8d237af37",
+        "52c24dba-f3dd-4547-ab68-785e9714b527",
+        "d0dc050d-73cd-4f85-8f8f-39bd08853f72"
+      ],
+      "brandAssets": {
+        "logo": {
+          "assetKey": "app-mark-four-point-star",
+          "url": "https://vgbujcuwptvheqijyjbe.supabase.co/storage/v1/object/public/hmac-uploads/projects/5e838151-f7e9-4add-94b7-61c132655c5c/brand-assets/app-mark-four-point-star/icon.png",
+          "sourcePath": "assets/icon.png"
+        }
+      },
+      "contextFiles": [
+        ".superdesign/design-system.md",
+        "src/panel.html"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "7bfaf29006cbfd9491b7351e0646fb61604a8b9a3133ccee35c1512ed4e00992",
+        "src/panel.html": "e70ee5515bc68f6755a9813377bd3edb94b2e7cf2f599f1a97f1da67da770f80"
+      },
+      "components": [],
+      "drafts": {
+        "5b58dada-e552-45a3-aefc-1c35bfe6712b": {
+          "title": "现状基线 · 当前皮肤注入面板（像素级复刻）",
+          "visualDirection": "ground-truth baseline: the current 620x745 hand-cut board panel reproduced unchanged",
+          "currentVersion": 1
+        },
+        "a5a2d89a-fd84-4238-a2fe-795d2f5bcef8": {
+          "title": "Painting Skin Theme - Hand-cut Console",
+          "visualDirection": "Direction A: keeps the Material A hand-cut pink board identity (38-point polygon, portrait overflow, hexagon notches) and expands it into a 1080x720 three-zone console: hero rail | 33-skin library grid | injection diagnostics",
+          "parentDraftId": "5b58dada-e552-45a3-aefc-1c35bfe6712b",
+          "currentVersion": 1
+        },
+        "eca735f0-8e6b-4e9b-be06-fa2662dee050": {
+          "title": "Painting Skin Theme - Adaptive Glass Redesign",
+          "visualDirection": "Direction B: Material B frosted glass with the chrome accent tinted from the active skin's documented accent (换肤即换色), same three-zone IA but a denser list-style library and a 13-chip verification strip",
+          "parentDraftId": "5b58dada-e552-45a3-aefc-1c35bfe6712b",
+          "currentVersion": 1
+        }
+      },
+      "updatedAt": "2026-09-26T11:07:18Z"
+    }
+  }
+}

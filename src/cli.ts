@@ -18,6 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { applySkin, buildPayloadExpression, detectInjectedSkin, getStatus, listPets, listSkins, readPetSelection, removeSkin, selectPet, themesRoot } from './injector';
 import { candidatesFor, clearTargetExe, configPath, defaultPaths, describeTargetApp, relaunchWithDebugPort, saveTargetExe, targetSpecOf, waitForRenderer } from './target-app';
+import { unpackedIfNeeded } from './media-url';
 import { startUsagePump, usagePumpStatus } from './usage-pump';
 import type { SkinEntry } from './theme-store';
 import type { SkinMode } from './types';
@@ -30,11 +31,20 @@ function flag(name: string, fallback: string): string {
 /** 面板要的那份状态（`panel` 命令与 `relaunch --panel-state` 共用同一段逻辑，
  *  这样面板点一次"重启并注入"只需要起一个子进程，而不是先取状态、再重启、再取状态三次）。 */
 async function panelStateOf(skins: SkinEntry[]): Promise<Record<string, unknown>> {
-  const portraitOf = (id: string) => {
+  const fileOf = (id: string, ...roles: string[]) => {
     const entry = skins.find((s) => s.manifest.id === id);
-    const file = entry?.manifest.assets?.characterDark;
-    return entry && file ? path.join(entry.dir, file) : null;
+    for (const role of roles) {
+      const file = entry?.manifest.assets[role];
+      if (entry && file) {
+        /* 打包后 webm 解包在 app.asar.unpacked：不改写的话面板的 <video> 拿到的是 asar 虚拟路径（开发态原样返回） */
+        return unpackedIfNeeded(path.join(entry.dir, file));
+      }
+    }
+    return null;
   };
+  /** 抽屉条要画全部皮肤的缩略图，英雄位要播**预选**皮肤的动态立绘（预选可与已注入不同）—— 都得整表给 */
+  const portraits = Object.fromEntries(skins.map((s) => [s.manifest.id, fileOf(s.manifest.id, 'characterDark', 'characterLight')]));
+  const motions = Object.fromEntries(skins.map((s) => [s.manifest.id, fileOf(s.manifest.id, 'characterMotion')]));
   const injectedId = await detectInjectedSkin();
   const currentId = injectedId || skins[0]?.manifest.id || '';
   const current = skins.find((s) => s.manifest.id === currentId) ?? skins[0];
@@ -44,7 +54,10 @@ async function panelStateOf(skins: SkinEntry[]): Promise<Record<string, unknown>
     skins: skins.map((s) => ({ id: s.manifest.id, name: s.manifest.name, author: s.manifest.author })),
     skinIndex: Math.max(0, skins.findIndex((s) => s.manifest.id === currentId)),
     injectedId,
-    portrait: portraitOf(currentId),
+    portrait: portraits[currentId],
+    portraits,
+    motions,
+    motion: motions[currentId] ?? fileOf(currentId, 'characterMotion'),
     pets: [{ id: 'none', name: '不显示' }, ...pets],
     petIndex: Math.max(0, ['none', ...pets.map((p) => p.id)].indexOf(petId || 'none')),
     status: current ? await getStatus(current) : null,

@@ -1,0 +1,61 @@
+# ---------- 依赖 ----------
+node_modules/
+
+# ---------- 编译产物（由 src/ + tsc 生成）----------
+dist/
+
+# ---------- 打包产物（由 electron-builder 生成）----------
+release/
+
+# ---------- 工具链的中间产物（全部可由 tools/*.js 重新生成）----------
+# 抽帧 / 抠底 / 拼图检查图 / 解压出来的 Electron 43（单这一项就 235MB）
+tools/work/
+# 样张（由 tools/samples.js 生成）
+tools/out/
+
+# ---------- 美术创作过程的原始素材（不进仓库；成品已落在 themes/<id>/assets/）----------
+素材/
+线稿/
+
+# ---------- 实机验证脚本与产物（本地调试用，不进仓库）----------
+.verify/
+
+# ---------- 运行时/工具留下的状态 ----------
+.zcode/
+
+# ---------- 杂项 ----------
+*.log
+*.tmp
+Thumbs.db
+.DS_Store
+
+# ===== ↑ 以上同步自 .gitignore（「从 .gitignore 同步」只重写以上部分）=====
+.git/
+.hg/
+.svn/
+bower_components/
+jspm_packages/
+__pycache__/
+site-packages/
+venv/
+coverage/
+htmlcov/
+lcov-report/
+cmakefiles/
+cmake-build-*/
+bazel-*/
+pods/
+deriveddata/
+storybook-static/
+playwright-report/
+test-results/
+allure-results/
+allure-report/
+cdk.out/
+*.egg-info/
+*.dist-info/
+eggs/
+pip-wheel-metadata/
+wheels/
+# ----- ↑ 以上为 ZCode 默认排除规则（自定义规则请写在本行下方，不会被同步/恢复改动）-----
+# 自定义规则写在下方（本行提示可删除）

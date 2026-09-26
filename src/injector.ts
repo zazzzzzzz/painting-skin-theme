@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { CdpSession, fetchTargets, pickRendererTarget } from './cdp';
 import { debugPortCandidates } from './target-app';
+import { assetFileUrl } from './media-url';
 import { listSkins, loadSkin, readAssetDataUrl, readText, type SkinEntry } from './theme-store';
 import { buildUsageBarScript } from './usage-bar';
 import { buildPetScript, getPetRegistry, petSelectExpression } from './pet';
@@ -55,10 +56,16 @@ interface MountReport {
   workspace?: { left: number; top: number; width: number; height: number } | null;
 }
 
+/** 动态立绘的角色名：清单里声明它，页面就用 <video> 播这个文件（**以 file:// URL 交付，不走 data URI**）。
+ *  为什么单独一条路径：视频/大图内联成 data URI 会撑爆单条 CSS 声明并被静默丢弃（4K 动画必然如此），
+ *  而 file:// 只受磁盘限制；宠物素材早就是这么干的（见 src/media-url.ts）。 */
+const MOTION_ROLE = 'characterMotion';
+
 export function buildPayloadExpression(skin: SkinEntry, mode: SkinMode): string {
   const { manifest, dir } = skin;
   const assets: Record<string, string> = {};
   for (const [role, file] of Object.entries(manifest.assets)) {
+    if (role === MOTION_ROLE) continue;      // 动态立绘不内联，见下方 motion
     assets[role] = readAssetDataUrl(dir, file);
   }
   /* 样式层按原生实现的三段式拼装：契约（美术层几何与事件穿透）→ token 映射 → 主题样式。
@@ -68,12 +75,15 @@ export function buildPayloadExpression(skin: SkinEntry, mode: SkinMode): string 
   if (manifest.skin.artworkContract) sheets.push(readText(dir, manifest.skin.artworkContract));
   if (manifest.skin.tokens) sheets.push(readText(dir, manifest.skin.tokens));
   sheets.push(readText(dir, manifest.skin.css));
-  const payload = {
+  const payload: Record<string, unknown> = {
     adapterVersion: manifest.adapterVersion,
     requestedTheme: mode,
     css: sheets.join('\n\n'),
     assets,
   };
+  /* 动态立绘（可选）：以 file:// URL 交给页面，运行时把它挂成 <video>。 */
+  const motionFile = manifest.assets[MOTION_ROLE];
+  if (motionFile) payload.motion = assetFileUrl(dir, motionFile);
   const template = readRuntimeTemplate(skin);
   const placeholder = '__DIANA_PAYLOAD_BASE64__';
   /* 占位符必须**恰好一处**：String.replace 只换第一处，而模板里若在别处（例如注释）也原样写了它，
@@ -126,6 +136,24 @@ function verifyExpression(adapterVersion: string): string {
     : null;
   const character = document.querySelector('.diana-zcode-character');
   const characterPaint = character ? getComputedStyle(character).backgroundImage : 'none';
+  /* 动态立绘是 <video>：它没有 background-image，判据改成"元数据/画面真加载出来了"。
+     视频从 file:// 读，metadata 一般很快，但给一段有界等待，避免首帧还没解出来就误报。 */
+  const motionVideo = character && character.tagName === 'VIDEO' ? character : null;
+  if (motionVideo) {
+    const deadline = performance.now() + 4000;
+    while (performance.now() < deadline && !(motionVideo.readyState >= 2 && motionVideo.videoWidth > 0)) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+  }
+  const motionInfo = motionVideo ? {
+    readyState: motionVideo.readyState,
+    width: motionVideo.videoWidth,
+    height: motionVideo.videoHeight,
+    paused: motionVideo.paused,
+    currentTime: Number(motionVideo.currentTime.toFixed(2)),
+    src: String(motionVideo.currentSrc || motionVideo.src || '').slice(-40),
+    error: motionVideo.error ? motionVideo.error.code : null,
+  } : null;
   const rail = document.querySelector('.diana-zcode-message-rail');
   const railTick = rail ? rail.querySelector('button > span') : null;
   const railTickColor = railTick ? getComputedStyle(railTick).backgroundColor : null;
@@ -153,8 +181,12 @@ function verifyExpression(adapterVersion: string): string {
     styleCount: style ? 1 : 0,
     chromeCount: chrome ? 1 : 0,
     foregroundCount: foreground ? 1 : 0,
-    artworkNodeCount: chrome ? chrome.querySelectorAll('span').length : 0,
-    artworkResolved: Boolean(character && characterPaint && characterPaint !== 'none'),
+    // 美术层 11 个节点：10 个 span + 立绘（静态立绘也是 span，动态立绘是 <video>，两者都算）
+    artworkNodeCount: chrome ? chrome.querySelectorAll('span').length + chrome.querySelectorAll('video').length : 0,
+    artworkResolved: motionVideo
+      ? Boolean(motionVideo.readyState >= 2 && motionVideo.videoWidth > 0)
+      : Boolean(character && characterPaint && characterPaint !== 'none'),
+    motion: motionInfo,
     railPaint: rail ? Boolean(railTickColor && railTickColor !== 'rgba(0, 0, 0, 0)' && railTickColor !== 'transparent') : true,
     pointerSafe: Boolean(chrome && getComputedStyle(chrome).pointerEvents === 'none'),
     pointPassesThrough: Boolean(pointTarget && !chrome?.contains(pointTarget)),

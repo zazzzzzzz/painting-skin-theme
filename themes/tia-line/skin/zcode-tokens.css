@@ -1,0 +1,112 @@
+/*
+ * Diana × ZCode paired token blueprint.
+ * This file intentionally contains no build-hash selectors and changes no app bundle.
+ * A future user-space adapter may add `diana-zcode-host` to <html> after validating
+ * the active ZCode version and obtaining separate approval for any live inspection.
+ */
+
+html.diana-zcode-host.theme-zai-dark {
+  --diana-zcode-surface: #0f0d0c;
+  --diana-zcode-panel: #191614;
+  --diana-zcode-panel-strong: #1f1c19;
+  --diana-zcode-sidebar: #1a1816;
+  --diana-zcode-ink: #f3f0ee;
+  --diana-zcode-muted: #a9a4a1;
+  --diana-zcode-accent: #dd803c;
+  --diana-zcode-accent-soft: #382c24;
+  --diana-zcode-border: #2d2926;
+
+  --color-background: var(--diana-zcode-surface);
+  --color-background-win-alt: var(--diana-zcode-panel-strong);
+  --color-header: var(--diana-zcode-panel);
+  --color-panel: var(--diana-zcode-panel);
+  --color-sidebar: var(--diana-zcode-sidebar);
+  --color-card: var(--diana-zcode-panel-strong);
+  --color-popover: var(--diana-zcode-panel-strong);
+  --color-popover-header: var(--diana-zcode-panel);
+  --color-input: var(--diana-zcode-panel-strong);
+  --color-border: rgb(221 128 60 / 17%);
+  --color-border-hover: rgb(221 128 60 / 28%);
+  --color-hover: rgb(221 128 60 / 9%);
+  --color-selected: rgb(221 128 60 / 17%);
+  --color-surface: rgb(221 128 60 / 7%);
+  --color-surface-hover: rgb(221 128 60 / 14%);
+  --color-accent: var(--diana-zcode-accent-soft);
+  --color-brand: var(--diana-zcode-ink);
+  --color-primary: var(--diana-zcode-ink);
+  --color-primary-foreground: var(--diana-zcode-surface);
+  --color-foreground: var(--diana-zcode-ink);
+  --color-foreground-subtle: var(--diana-zcode-muted);
+  --color-foreground-subtlest: rgb(221 128 60 / 58%);
+
+  /* ---- 应用自己的"浮层 / 面"级 token ----
+   * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
+   * .theme-zai-dark/light 里；主题不覆盖它们，弹窗就会继续用应用的中性灰（`.bg-menu` →
+   * var(--color-menu) = #2b2b2b）。实测：设置页"界面语言"下拉框背景 = rgb(43,43,43)（见
+   * .verify/popover-tokens.js）。这里只引用主题自身的 token，所以三套皮肤用的是同一段映射。 */
+  --color-menu: var(--diana-zcode-panel-strong);
+  --color-menu-hover: color-mix(in srgb, var(--diana-zcode-accent) 14%, transparent);
+  --color-secondary: var(--diana-zcode-panel-strong);
+  --color-popover-foreground: var(--diana-zcode-ink);
+  --color-popover-border: var(--diana-zcode-border);
+  --color-tooltip: var(--diana-zcode-panel-strong);
+  --color-tooltip-foreground: var(--diana-zcode-ink);
+  --color-tooltip-tag: color-mix(in srgb, var(--diana-zcode-accent) 16%, transparent);
+  --color-tooltip-tag-foreground: var(--diana-zcode-ink);
+  --color-toast: var(--diana-zcode-panel-strong);
+  --color-card-selected: var(--color-selected);
+  --color-input-border-focused: var(--diana-zcode-accent);
+}
+
+html.diana-zcode-host.theme-zai-light {
+  --diana-zcode-surface: #fbf8f6;
+  --diana-zcode-panel: #ffffff;
+  --diana-zcode-panel-strong: #fffbf8;
+  --diana-zcode-sidebar: #f8f5f3;
+  --diana-zcode-ink: #2c2825;
+  --diana-zcode-muted: #7e7671;
+  --diana-zcode-accent: #914a18;
+  --diana-zcode-accent-soft: #f2e5dc;
+  --diana-zcode-border: #e8e3df;
+
+  --color-background: var(--diana-zcode-surface);
+  --color-background-win-alt: #f2ecef;
+  --color-header: var(--diana-zcode-panel);
+  --color-panel: var(--diana-zcode-panel);
+  --color-sidebar: var(--diana-zcode-sidebar);
+  --color-card: var(--diana-zcode-panel);
+  --color-popover: var(--diana-zcode-panel);
+  --color-popover-header: var(--diana-zcode-panel-strong);
+  --color-input: var(--diana-zcode-panel);
+  --color-border: rgb(145 74 24 / 16%);
+  --color-border-hover: rgb(145 74 24 / 27%);
+  --color-hover: rgb(145 74 24 / 7%);
+  --color-selected: rgb(145 74 24 / 13%);
+  --color-surface: rgb(145 74 24 / 5%);
+  --color-surface-hover: rgb(145 74 24 / 10%);
+  --color-accent: var(--diana-zcode-accent-soft);
+  --color-brand: var(--diana-zcode-ink);
+  --color-primary: var(--diana-zcode-ink);
+  --color-primary-foreground: var(--diana-zcode-panel);
+  --color-foreground: var(--diana-zcode-ink);
+  --color-foreground-subtle: var(--diana-zcode-muted);
+  --color-foreground-subtlest: rgb(145 74 24 / 56%);
+
+  /* ---- 应用自己的"浮层 / 面"级 token ----
+   * 这些是 ZCode（Tailwind 侧）给弹窗、下拉菜单、提示气泡、toast 用的面级变量，定义在它自己的
+   * .theme-zai-dark/light 里；主题不覆盖它们，弹窗就会继续用应用的中性灰（`.bg-menu` →
+   * var(--color-menu) = #2b2b2b）。实测：设置页"界面语言"下拉框背景 = rgb(43,43,43)（见
+   * .verify/popover-tokens.js）。这里只引用主题自身的 token，所以三套皮肤用的是同一段映射。 */
+  --color-menu: var(--diana-zcode-panel-strong);
+  --color-menu-hover: color-mix(in srgb, var(--diana-zcode-accent) 14%, transparent);
+  --color-secondary: var(--diana-zcode-panel-strong);
+  --color-popover-foreground: var(--diana-zcode-ink);
+  --color-popover-border: var(--diana-zcode-border);
+  --color-tooltip: var(--diana-zcode-panel-strong);
+  --color-tooltip-foreground: var(--diana-zcode-ink);
+  --color-tooltip-tag: color-mix(in srgb, var(--diana-zcode-accent) 16%, transparent);
+  --color-tooltip-tag-foreground: var(--diana-zcode-ink);
+  --color-toast: var(--diana-zcode-panel-strong);
+  --color-card-selected: var(--color-selected);
+  --color-input-border-focused: var(--diana-zcode-accent);
+}
